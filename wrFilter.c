@@ -6,33 +6,33 @@
 // 1Pole LPF //
 ///////////////
 
-void l1p_init(filter_lp1_t* f) {
+void lp1_init(filter_lp1_t* f) {
 	f->x = 0;
 	f->y = 0;
 	f->c = 0.97;
 }
-float l1p_step(filter_lp1_t* f, float in) {
+float lp1_step(filter_lp1_t* f, float in) {
 	f->y = f->y + f->c * (in - f->y);
 	return f->y;
 }
-void l1p_set_coeff(filter_lp1_t* f, float c) {
+void lp1_set_coeff(filter_lp1_t* f, float c) {
 	f->c = c;
 }
-void l1p_set_freq(filter_lp1_t* f, float freq) {
+void lp1_set_freq(filter_lp1_t* f, float freq) {
 	f->c = freq/48000; // expo!
 }
-float l1p_step_v(filter_lp1_t* f, float* out, uint16_t size) {
-	// float* in2=in;
+float lp1_step_v(filter_lp1_t* f, float* in, float* out, uint16_t size) {
+	float* in2=in;
 	float* out2=out;
 	float* out3=out; // point to start of arrays
 	// out3 = y = previous OUT
 
 	// first samp
-	*out2++ = f->y + f->c * (f->x - f->y);
+	*out2++ = f->y + f->c * ((*in2++) - f->y);
 
 	// remainder of samps -> add nFloor early exit to avoid denormals
 	for(uint16_t i=0; i<(size-1); i++) {
-		*out2++ = (*out3) + f->c * (f->x - (*out3));
+		*out2++ = (*out3) + f->c * ((*in2++) - (*out3));
 		*out3++;
 	}
 

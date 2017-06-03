@@ -22,11 +22,11 @@ typedef struct filter_svf {
 } filter_svf_t;
 
 // Lowpass: 1-pole
-void l1p_init(filter_lp1_t* f);
-float l1p_step(filter_lp1_t* f, float in);
-void l1p_set_coeff(filter_lp1_t* f, float c);
-void l1p_set_freq(filter_lp1_t* f, float freq);
-float l1p_step_v(filter_lp1_t* f, float* out, uint16_t size);
+void lp1_init(filter_lp1_t* f);
+float lp1_step(filter_lp1_t* f, float in);
+void lp1_set_coeff(filter_lp1_t* f, float c);
+void lp1_set_freq(filter_lp1_t* f, float freq);
+float lp1_step_v(filter_lp1_t* f, float* in, float* out, uint16_t size);
 
 // DC-Blocker: Leaky Integrator -> Differentiator
 void dc_init(filter_dc_t* f);
