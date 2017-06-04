@@ -104,6 +104,7 @@ float function_step( func_gen_t* self, float fm_in )
 	}
 	return self->id;
 	// NB: this is not a triangle!
+	// assymmetric waveform for flagless rise/fall detection
 	// needs the following function to convert to ramp->tri->saw wave
 		// float scale = (self->id - 0.5) * 2.0;
 		// if( scale < -1.0 ){
@@ -121,7 +122,6 @@ float function_lookup( float id )
 {
 	return ( sign(id)*2.0 - 1.0 );
 }
-
 
 void function_v( func_gen_t* self, uint16_t b_size, float* r_up, float* r_dn, float* fm_in, float* out )
 {
@@ -170,67 +170,3 @@ void function_v( func_gen_t* self, uint16_t b_size, float* r_up, float* r_dn, fl
 		*r_up2++; *r_down2++;
 	}
 }
-
-/*
-calcOsc(rate) {
-	History id(0), trio(0);
-
-	// RAMP control for polar asymmetry
-	ramp = 0.6; // must be > 0.5
-	iRamp = 1 / (2 - (1/ramp));
-
-	rateUp = ramp * rate; // rate[2] = { rate, rate };
-	rateDown = iRamp * rate;
-	move = 0;
-	if(id < 0) {
-		move = rateDown;
-	} else {
-		move = rateUp;
-	} // move = rate[id < 0];
-	
-	loop = 1;
-	M_PI = 3.14159;
-
-	while( move != 0 ) {
-		if(id >= 0) { // rising
-
-			id += move; // choose speed based on sign
-			move = 0;
-
-			if( id > M_PI ) {
-				// through peak
-				move = (id - M_PI) * rateDown / rateUp;
-				id = -M_PI;
-			}
-			else if( id < 0 ) {
-				// rev to start
-				if( loop ) {
-					move = (-id) * rateDown / rateUp;
-				}
-				id = 0;
-			}
-			trio = id / M_PI;
-		}
-		else { // falling
-
-			id += move;
-			move = 0;
-
-			if( id < -M_PI ) {
-				// rev to peak
-				move = (id + M_PI) * rateUp / rateDown; // should be negative
-				id = M_PI;
-			}
-			else if( id >= 0 ) {
-				// cycle complete
-				if( loop ) {
-					move = id * rateUp / rateDown;
-				}
-				id = 0;
-			}
-			trio = -id / M_PI; // convert to falling TRI
-		}
-	}
-
-	return trio; // normalize -1 to +1
-}*/
