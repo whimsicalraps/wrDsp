@@ -46,7 +46,8 @@ float lp1_step_v(filter_lp1_t* f, float* in, float* out, uint16_t size) {
 // Differentiator followed by leaky integrator
 void dc_init(filter_dc_t* f)
 {
-	f->c = 0.97f; // default time constant
+	f->c = 0.997; // default time constant
+		// NB: lowering this val increases latency!!
 	f->x = 0;
 	f->y = 0;
 }
