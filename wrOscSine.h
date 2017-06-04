@@ -2,6 +2,10 @@
 
 #include <stdint.h>
 
+#define LUT_SIN_SIZE  1024
+#define LUT_SIN_HALF  (LUT_SIN_SIZE / 2)
+extern const float sine_lut[];
+
 typedef struct osc_sine{
 	float rate;
 	float id;

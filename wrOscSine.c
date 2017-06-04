@@ -69,7 +69,7 @@ float osc_sine_step( osc_sine_t* self, float fm )
 	}
 
 	// lookup table w/ linear interpolation
-	float fbase = LUT_HALF * self->id;
+	float fbase = LUT_SIN_HALF * self->id;
 	uint16_t base = (uint16_t)fbase;
 	float mix = fbase - (float)base;
 	float lut = sine_lut[base];
@@ -105,7 +105,7 @@ void osc_sine_process_v( osc_sine_t* self, uint16_t b_size, float* buf_run, floa
 		}
 
 		// lookup table w/ linear interpolation
-		fbase = LUT_HALF * self->id;
+		fbase = LUT_SIN_HALF * self->id;
 		base = (uint16_t)fbase;
 		mix = fbase - (float)base;
 		lut = sine_lut[base];
