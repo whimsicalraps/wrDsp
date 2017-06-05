@@ -38,6 +38,11 @@ void function_rate( func_gen_t* self, float rate )
 	self->rate = lim_f_0_1( rate );
 }
 
+void function_fm_ix( func_gen_t* self, float ix )
+{
+	self->fm_ix = lim_f_0_1(ix) * 0.1;
+}
+
 // Audio Rate Process (helper function)
 void function_ramp( func_gen_t* self, float skew )
 {
