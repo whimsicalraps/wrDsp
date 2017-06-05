@@ -18,7 +18,7 @@ typedef struct mix_peaks {
 } mix_peaks_t;
 
 // TANH
-void mix_tanh_init(mix_tanh_t* mix, uint16_t size);
+int8_t mix_tanh_init(mix_tanh_t* mix, uint16_t size);
 	// per-sample
 void mix_tanh_add(mix_tanh_t* mix, float input);
 float mix_tanh_step(mix_tanh_t* mix);
@@ -27,7 +27,7 @@ void mix_tanh_add_v(mix_tanh_t* mix, float* input);
 void mix_tanh_v(mix_tanh_t* mix, float* output);
 
 // PEAKS
-void mix_peaks_init(mix_peaks_t* mix, uint16_t size, uint16_t chans);
+int8_t mix_peaks_init(mix_peaks_t* mix, uint16_t size, uint16_t chans);
 	// per-sample
 void mix_peaks_add(mix_peaks_t* mix, float input, uint16_t ix);
 float mix_peaks_step(mix_peaks_t* mix);

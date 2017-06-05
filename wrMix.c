@@ -5,35 +5,35 @@
 #include <wrTrig.h>
 
 // INIT FUNCTIONS
-void mix_tanh_init(mix_tanh_t* mix, uint16_t size)
+int8_t mix_tanh_init(mix_tanh_t* mix, uint16_t size)
 {
+	int8_t err = 0;
 	mix->bus = 0;
 	dc_init(&(mix->hpf));
 	mix->b_size = size;
 	mix->bus_v = NULL;
 	mix->bus_v = malloc(sizeof(float)*size);
-	if(mix->bus_v == NULL) {
-		// printf("ERROR: Couldn't allocate memory.\n");
-	}
+	if( mix->bus_v == NULL ){ err = 1; }
+
+	return err;
 }
 
-void mix_peaks_init(mix_peaks_t* mix, uint16_t size, uint16_t chans)
+int8_t mix_peaks_init(mix_peaks_t* mix, uint16_t size, uint16_t chans)
 {
+	int8_t err = 0;
 	mix->bus = 0;
 	mix->b_size = size;
 	mix->scale = NULL;
 	mix->scale = malloc(sizeof(float)*chans);
-	if(mix->scale == NULL) {
-		// printf("ERROR: Couldn't allocate memory.\n");
-	}
+	if( mix->scale == NULL ){ err = 1; }
 	for(uint16_t i=0; i<chans; i++){
 		mix->scale[i] = 1 / (float)(i+1);
 	}
 	mix->bus_v = NULL;
 	mix->bus_v = malloc(sizeof(float)*size);
-	if(mix->bus_v == NULL) {
-		// printf("ERROR: Couldn't allocate memory.\n");
-	}
+	if(mix->bus_v == NULL) { err = 2; }
+
+	return err;
 }
 
 //////////
