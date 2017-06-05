@@ -137,35 +137,41 @@ void function_v( func_gen_t* self, uint16_t b_size, float* r_up, float* r_dn, fl
 	float move;
 
 	for(uint16_t i=0; i<b_size; i++){
+		// use self->go flag to handle paused funcs
+		// once a func is go=0, fill buffer with zeroes & return early
+
+
 		if( self->id >= 0 ){
 			move = self->rate * (*r_up2) + (*fm_in2++ * self->fm_ix);
 		} else {
 			move = self->rate * (*r_down2) + (*fm_in2++ * self->fm_ix);
 		}
 		while( move != 0 ){
-			if( self->id >= 0 ){
+			if( self->id > 0 ){ // attack
 				self->id += move;
 				move = 0;
 				if( self->id >= 1.0 ){
 					move = (self->id - 1.0) * (*r_down2) / (*r_up2);
 					self->id = -1.0;
-				} else if( self->id < 0 ){
-					if( self->loop != 0 ){
+				} else if( self->id < 0 ){ // rev TZ
+					if( self->loop ){
 						move = self->id * (*r_down2) / (*r_up2);
-						if( self->loop > 0 ) { self->loop -= 1; }
+						if( self->loop > 0 ) { self->loop++; } // TZ adds to burst!
 					}
 					self->id = 0;
 				}
-			} else {
+			} else { // release
 				self->id += move;
 				move = 0;
-				if( self->id >= 0 ){
-					if( self->loop != 0 ){
+				if( self->id >= 0 ){ // rel -> ?atk
+					if( self->loop ){
 						move = self->id * (*r_up2) / (*r_down2);
-						if( self->loop > 0 ) { self->loop -= 1; }
+						if( self->loop > 0 ) { self->loop--; }
+						self->id = 0.00000001; // get into attack case
+					} else {
+						self->id = 0; // only for STOP
 					}
-					self->id = 0;
-				} else if( self->id < -1.0 ){
+				} else if( self->id < -1.0 ){ // TZ back to attack
 					move = (self->id + 1.0) * (*r_up2) / (*r_down2);
 					self->id = 1.0;
 				}
