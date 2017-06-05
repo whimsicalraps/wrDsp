@@ -17,7 +17,7 @@ typedef struct shaper{
 	float* coeff;		// vector of interp coefficients
 } shaper_t;
 
-void shaper_init( shaper_t* self, uint16_t b_size, uint16_t channels );
+int8_t shaper_init( shaper_t* self, uint16_t b_size, uint16_t channels );
 void shaper_prep( shaper_t* self, float control );
 void shaper_prep_v( shaper_t* self, float* audio, float control );
 float shaper_apply( shaper_t* self, float input );
