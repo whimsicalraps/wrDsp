@@ -19,6 +19,7 @@ typedef struct filter_svf {
 	float q;
 	float c;
 	uint8_t mode;
+    uint32_t sample_rate;
 } filter_svf_t;
 
 // Lowpass: 1-pole
@@ -35,7 +36,7 @@ float dc_step(filter_dc_t* f, float in);
 void dc_step_v(filter_dc_t* f, float* in, float* out, uint16_t size);
 
 // State-variable: 2-pole
-void svf_init(filter_svf_t* f, uint8_t mode);
+void svf_init(filter_svf_t* f, uint8_t mode, uint32_t sample_rate);
 float svf_process_frame(filter_svf_t* f, float input);
 float svf_step(filter_svf_t* f, float input);
 void svf_set_mode(filter_svf_t* f, uint8_t mode);

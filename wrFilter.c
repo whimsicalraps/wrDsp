@@ -1,6 +1,6 @@
 #include "wrFilter.h"
-#include "wrMath.h"
-
+#include "../wrLib/wrMath.h"
+#include <math.h>
 
 ///////////////
 // 1Pole LPF //
@@ -91,13 +91,14 @@ void dc_step_v(filter_dc_t* f, float* in, float* out, uint16_t size)
 // State-variable: 2-pole //
 ////////////////////////////
 
-void svf_init(filter_svf_t* f, uint8_t mode) {
+void svf_init(filter_svf_t* f, uint8_t mode, uint32_t sample_rate) {
 	f->x[0] = 0;
 	f->x[1] = 0;
 	f->x[2] = 0;
 	f->q = 0.5;
 	f->c = 0.02;
 	f->mode = mode;
+    f->sample_rate = sample_rate;
 }
 void svf_set_mode(filter_svf_t* f, uint8_t mode) {
 	f->mode = mode;
@@ -120,7 +121,10 @@ void svf_set_coeff(filter_svf_t* f, float coeff) {
 	f->c = lim_f(coeff * 0.5, 0.001, 0.499);
 }
 void svf_set_freq(filter_svf_t* f, float freq) {
-	f->c = lim_f(freq/48000, 0.001, 0.499); // need expo lookup here
+//	f->c = lim_f(freq/(f->sample_rate), 0.001, 0.499); // need expo lookup here
+    // when freq = sample_rate/4, f->c = 0.5
+
+    f->c = exp(-2.0 * WR_PI * freq * 1/f->sample_rate );
 
 	// Set mixfreq to whatever rate your system is using (eg 48Khz)
 	// Calculate filter cutoff frequencies
