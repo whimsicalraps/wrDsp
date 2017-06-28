@@ -104,7 +104,6 @@ void svf_set_mode(filter_svf_t* f, uint8_t mode) {
 	f->mode = mode;
 }
 float svf_process_frame(filter_svf_t* f, float input) {
-	float out;
 	f->x[0] = f->x[0] + (f->c * f->x[1]);
 	f->x[2] = (input - (f->q * f->x[1])) - f->x[0];
 	f->x[1] = f->x[1] + (f->c * f->x[2]);
