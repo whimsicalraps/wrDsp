@@ -25,7 +25,7 @@ void lp1_set_coeff(filter_lp1_t* f, float c) {
 void lp1_set_freq(filter_lp1_t* f, float freq) {
 	f->c = freq/48000; // expo!
 }
-float lp1_step_v(filter_lp1_t* f, float* in, float* out, uint16_t size) {
+void lp1_step_v(filter_lp1_t* f, float* in, float* out, uint16_t size) {
 	float* in2=in;
 	float* out2=out;
 	float* out3=out; // point to start of arrays
