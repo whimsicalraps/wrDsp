@@ -42,6 +42,37 @@ void lp1_step_v(filter_lp1_t* f, float* in, float* out, uint16_t size) {
 
 	f->y = *out3; // last output
 }
+uint8_t lp1_converged( filter_lp1_t* f )
+{
+	float diff = f->x - f->y;
+	if((diff > -nFloor) && (diff < nFloor)) { return 1; }
+	return 0;
+}
+void lp1_step_c_v(filter_lp1_t* f, float* out, uint16_t size)
+{
+	float* out2=out;
+	float* out3=out; // point to start of arrays
+
+	// first samp
+		// check if we've already converged
+	if( lp1_converged(f) ){
+		for(uint16_t i=0; i<size; i++){
+			*out2++ = f->x;
+		}
+		f->y = f->x;
+		return;
+	}
+	*out2++ = f->y + f->c * (f->x - f->y);
+
+	// remainder of samps -> add nFloor early exit to avoid denormals
+	for(uint16_t i=0; i<(size-1); i++) {
+		*out2++ = (*out3) + f->c * (f->x - (*out3));
+		*out3++;
+	}
+
+	f->y = *out3; // last output
+}
+
 
 ////////////////
 // DC-Blocker //
