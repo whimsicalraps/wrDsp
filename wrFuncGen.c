@@ -40,7 +40,7 @@ void function_rate( func_gen_t* self, float rate )
 
 void function_fm_ix( func_gen_t* self, float ix )
 {
-	self->fm_ix = lim_f_0_1(ix) * 0.1;
+	self->fm_ix = lim_f_0_1(ix) * 0.1f;
 }
 
 // Audio Rate Process (helper function)
@@ -60,8 +60,8 @@ void function_ramp_v( uint16_t b_size, float ctrl_rate, float* audio_rate, float
 	float* ramp_down2 = ramp_down;
 
 	for(uint16_t i=0;i<b_size;i++){
-		*ramp_up2 = 0.5 / (0.998 * lim_f(ctrl_rate + *audio_rate2++,0,1) + 0.001);
-		*ramp_down2++ = 1/ (2- (1/ *ramp_up2++));
+		*ramp_up2 = 0.5f / (0.998f * lim_f(ctrl_rate + *audio_rate2++,0.0f,1.0f) + 0.001f);
+		*ramp_down2++ = 1.0f/ (2.0f- (1.0f/ *ramp_up2++));
 	}
 }
 
@@ -77,32 +77,32 @@ float function_step( func_gen_t* self, float fm_in )
 			move = self->rate * self->r_down + (fm_in * self->fm_ix);
 		}
 		// increment w/ overflow protection
-		while( move != 0 ){
-			if( self->id >= 0 ){ // are we above zero BEFORE moving
+		while( move != 0.0f ){
+			if( self->id >= 0.0f ){ // are we above zero BEFORE moving
 				self->id += move;
-				move = 0;
-				if( self->id >= 1.0 ){
-					move = (self->id - 1.0) * self->r_down / self->r_up;
-					self->id = -1.0;
-				} else if( self->id < 0.0 ){
+				move = 0.0f;
+				if( self->id >= 1.0f ){
+					move = (self->id - 1.0f) * self->r_down / self->r_up;
+					self->id = -1.0f;
+				} else if( self->id < 0.0f ){
 					if( self->loop != 0 ){
 						move = self->id * self->r_down / self->r_up;
 						if( self->loop > 0 ) { self->loop += 1; }
 					}
-					self->id = 0;
+					self->id = 0.0f;
 				}
 			} else {
 				self->id += move;
-				move = 0;
-				if( self->id >= 0 ){
+				move = 0.0f;
+				if( self->id >= 0.0f ){
 					if( self->loop != 0 ){
 						move = self->id * self->r_up / self->r_down;
 						if( self->loop > 0 ) { self->loop -= 1; }
 					}
-					self->id = 0;
-				} else if( self->id < -1.0 ){
-					move = (self->id + 1.0) * self->r_up / self->r_down;
-					self->id = 1.0;
+					self->id = 0.0f;
+				} else if( self->id < -1.0f ){
+					move = (self->id + 1.0f) * self->r_up / self->r_down;
+					self->id = 1.0f;
 				}
 			}
 		}
@@ -120,12 +120,12 @@ float function_step( func_gen_t* self, float fm_in )
 
 float sign( float n )
 {
-	return ( (n > 0) - (n < 0) );
+	return ( (n > 0.0f) - (n < 0.0f) );
 }
 
 float function_lookup( float id )
 {
-	return ( sign(id)*2.0 - 1.0 );
+	return ( sign(id)*2.0f - 1.0f );
 }
 
 void function_v( func_gen_t* self, uint16_t b_size, float* r_up, float* r_dn, float* fm_in, float* out )
@@ -140,40 +140,39 @@ void function_v( func_gen_t* self, uint16_t b_size, float* r_up, float* r_dn, fl
 		// use self->go flag to handle paused funcs
 		// once a func is go=0, fill buffer with zeroes & return early
 
-
-		if( self->id >= 0 ){
+		if( self->id >= 0.0f ){
 			move = self->rate * (*r_up2) + (*fm_in2++ * self->fm_ix);
 		} else {
 			move = self->rate * (*r_down2) + (*fm_in2++ * self->fm_ix);
 		}
-		while( move != 0 ){
-			if( self->id > 0 ){ // attack
+		while( move != 0.0f ){
+			if( self->id > 0.0f ){ // attack
 				self->id += move;
-				move = 0;
-				if( self->id >= 1.0 ){
-					move = (self->id - 1.0) * (*r_down2) / (*r_up2);
-					self->id = -1.0;
-				} else if( self->id < 0 ){ // rev TZ
+				move = 0.0f;
+				if( self->id >= 1.0f ){
+					move = (self->id - 1.0f) * (*r_down2) / (*r_up2);
+					self->id = -1.0f;
+				} else if( self->id < 0.0f ){ // rev TZ
 					if( self->loop ){
 						move = self->id * (*r_down2) / (*r_up2);
-						if( self->loop > 0 ) { self->loop++; } // TZ adds to burst!
+						if( self->loop > 0.0f ) { self->loop++; } // TZ adds to burst!
 					}
-					self->id = 0;
+					self->id = 0.0f;
 				}
 			} else { // release
 				self->id += move;
-				move = 0;
-				if( self->id >= 0 ){ // rel -> ?atk
+				move = 0.0f;
+				if( self->id >= 0.0f ){ // rel -> ?atk
 					if( self->loop ){
 						move = self->id * (*r_up2) / (*r_down2);
 						if( self->loop > 0 ) { self->loop--; }
-						self->id = 0.00000001; // get into attack case
+						self->id = 0.00000001f; // get into attack case
 					} else {
-						self->id = 0; // only for STOP
+						self->id = 0.0f; // only for STOP
 					}
-				} else if( self->id < -1.0 ){ // TZ back to attack
-					move = (self->id + 1.0) * (*r_up2) / (*r_down2);
-					self->id = 1.0;
+				} else if( self->id < -1.0f ){ // TZ back to attack
+					move = (self->id + 1.0f) * (*r_up2) / (*r_down2);
+					self->id = 1.0f;
 				}
 			}
 		}
