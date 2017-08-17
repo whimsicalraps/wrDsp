@@ -2,6 +2,8 @@
 #include <wrFuncGen.h>
 #include <wrMath.h>
 
+#include "../STM32F4-workarea/Project/JF3-test/lib/debug.h"
+
 void function_init( func_gen_t* self, int8_t loop )
 {
 	self->go         = 0; // stopped
@@ -53,7 +55,11 @@ void function_ramp( func_gen_t* self, float skew )
 	// self->r_down = 1/ (2- (1/ self->r_up));
 }
 
-void function_ramp_v( uint16_t b_size, float ctrl_rate, float* audio_rate, float* ramp_up, float* ramp_down )
+void function_ramp_v( uint16_t b_size
+	                , float ctrl_rate
+	                , float* audio_rate
+	                , float* ramp_up
+	                , float* ramp_down )
 {
 	float* audio_rate2 = audio_rate;
 	float* ramp_up2 = ramp_up;
@@ -128,7 +134,12 @@ float function_lookup( float id )
 	return ( sign(id)*2.0f - 1.0f );
 }
 
-void function_v( func_gen_t* self, uint16_t b_size, float* r_up, float* r_dn, float* fm_in, float* out )
+void function_v( func_gen_t* self
+	           , uint16_t b_size
+	           , float* r_up
+	           , float* r_dn
+	           , float* fm_in
+	           , float* out )
 {
 	float* out2 = out;
 	float* r_up2 = r_up;
@@ -177,6 +188,6 @@ void function_v( func_gen_t* self, uint16_t b_size, float* r_up, float* r_dn, fl
 			}
 		}
 		*out2++ = self->id;
-		*r_up2++; *r_down2++;
+		r_up2++; r_down2++;
 	}
 }
