@@ -27,12 +27,22 @@ void function_init( func_gen_t* self, int8_t loop )
 // Called on trigger edges only
 void function_trig( func_gen_t* self, uint8_t state )
 {
-	// do a switch statement based on mode bitmask
-	/*switch (self->mode) {
-	case XXX :
-		//
-		break;
-	}*/
+	// do a conditional based on id's state for vari-level
+	// <=0 is only if stopped or in release stage
+		// vari-trigger point by changing 0f
+		// positive allows retrig in attack phase
+	if(state && (self->id <= 0.0f)){ // release stage/stopped
+		self->id = MIN_POS_FLOAT;
+		self->go = 1;
+	}
+}
+
+void function_loop( func_gen_t* self, int8_t loop )
+{
+	self->loop = loop;
+	if(loop != 0){
+		self->go = 1;
+	}
 }
 
 void function_rate( func_gen_t* self, float rate )
@@ -104,8 +114,10 @@ float function_step( func_gen_t* self, float fm_in )
 					if( self->loop != 0 ){
 						move = self->id * self->r_up / self->r_down;
 						if( self->loop > 0 ) { self->loop -= 1; }
+						self->id = MIN_POS_FLOAT;
+					} else {
+						self->id = 0.0f;
 					}
-					self->id = 0.0f;
 				} else if( self->id < -1.0f ){
 					move = (self->id + 1.0f) * self->r_up / self->r_down;
 					self->id = 1.0f;
@@ -124,6 +136,7 @@ float function_step( func_gen_t* self, float fm_in )
 		// return scale;
 }
 
+// compiler inlines this anyway
 float sign( float n )
 {
 	return ( (n > 0.0f) - (n < 0.0f) );
@@ -177,7 +190,8 @@ void function_v( func_gen_t* self
 					if( self->loop ){
 						move = self->id * (*r_up2) / (*r_down2);
 						if( self->loop > 0 ) { self->loop--; }
-						self->id = 0.00000001f; // get into attack case
+						self->id = MIN_POS_FLOAT; // get into attack case
+							// use 0x00800000 as float (smallest +ve number)
 					} else {
 						self->id = 0.0f; // only for STOP
 					}
