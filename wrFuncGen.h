@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#define MIN_POS_FLOAT 	(0.00000001f)
+
 typedef struct func_gen{
 	int8_t    go;
 	float     id;
@@ -19,6 +21,7 @@ void function_init( func_gen_t* self, int8_t loop );
 
 // Param functions
 void function_trig( func_gen_t* self, uint8_t state );
+void function_loop( func_gen_t* self, int8_t loop );
 void function_rate( func_gen_t* self, float rate );
 void function_fm_ix( func_gen_t* self, float ix );
 
