@@ -186,6 +186,14 @@ void function_v( func_gen_t* self
 				self->id += move;
 				move = 0.0f;
 				if( self->id >= 1.0f ){
+					if( self->s_mode && self->sustain ){
+						// fill rest of block with 1s
+						self->id = 1.0f;
+						for( i; i<b_size; i++ ){
+							*out2++ = self->id;
+						}
+						return;
+					}
 					move = (self->id - 1.0f) * (*r_down2) / (*r_up2);
 					self->id = -1.0f;
 				} else if( self->id < 0.0f ){ // rev TZ
@@ -203,9 +211,13 @@ void function_v( func_gen_t* self
 						move = self->id * (*r_up2) / (*r_down2);
 						if( self->loop > 0 ) { self->loop--; }
 						self->id = MIN_POS_FLOAT; // get into attack case
-							// use 0x00800000 as float (smallest +ve number)
 					} else {
+						// fill rest of block with 0s
 						self->id = 0.0f; // only for STOP
+						for( i; i<b_size; i++ ){
+							*out2++ = self->id;
+						}
+						return;
 					}
 				} else if( self->id < -1.0f ){ // TZ back to attack
 					move = (self->id + 1.0f) * (*r_up2) / (*r_down2);
