@@ -2,7 +2,13 @@
 
 #include <stdint.h>
 
+// use 0x00800000 as float (smallest +ve value)
 #define MIN_POS_FLOAT 	(0.00000001f)
+
+// should be an enum, so more like a type for public access
+#define FNGEN_TRANSIENT	0
+#define FNGEN_SUSTAIN	1
+#define FNGEN_CYCLE		2
 
 typedef struct func_gen{
 	int8_t    go;
@@ -11,6 +17,9 @@ typedef struct func_gen{
 	uint8_t   tr_state;
 	float     fm_ix;
 	int8_t    loop;	// nb: -1 is infinite loop. +ve is number of retrigs left.
+	uint8_t   s_mode;
+	uint8_t   sustain;
+
 
 	float     r_up;
 	float     r_down;
@@ -21,7 +30,9 @@ void function_init( func_gen_t* self, int8_t loop );
 
 // Param functions
 void function_trig( func_gen_t* self, uint8_t state );
+void function_mode( func_gen_t* self, uint8_t mode );
 void function_loop( func_gen_t* self, int8_t loop );
+void function_sustain( func_gen_t* self, uint8_t sust );
 void function_rate( func_gen_t* self, float rate );
 void function_fm_ix( func_gen_t* self, float ix );
 
