@@ -15,11 +15,11 @@ void function_init( func_gen_t* self, int8_t loop )
 	if(loop != 0){
 		self->go = 1; // start if looping
 	}
+	self->s_mode     = 0;
+	self->sustain    = 0;
 
 	self->r_up       = 1;
 	self->r_down     = 1;
-	// unimplemented
-	// self->sustain = 0;
 }
 
 // Param Functions
@@ -35,6 +35,13 @@ void function_trig( func_gen_t* self, uint8_t state )
 		self->id = MIN_POS_FLOAT;
 		self->go = 1;
 	}
+	self->sustain = state;
+}
+
+void function_mode( func_gen_t* self, uint8_t mode )
+{
+	function_loop(self, 0-(FNGEN_CYCLE == mode)); // 0 or -1
+	function_sustain(self, (FNGEN_SUSTAIN == mode));
 }
 
 void function_loop( func_gen_t* self, int8_t loop )
@@ -43,6 +50,11 @@ void function_loop( func_gen_t* self, int8_t loop )
 	if(loop != 0){
 		self->go = 1;
 	}
+}
+
+void function_sustain( func_gen_t* self, uint8_t sust )
+{
+	self->s_mode = sust;
 }
 
 void function_rate( func_gen_t* self, float rate )
