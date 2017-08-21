@@ -95,7 +95,7 @@ void function_ramp_v( uint16_t b_size
 
 float function_step( func_gen_t* self, float fm_in )
 {
-	if( self->go != 0 ){
+	if( self->go ){
 		float move;
 		
 		// determine rate based on direction
@@ -128,6 +128,7 @@ float function_step( func_gen_t* self, float fm_in )
 						if( self->loop > 0 ) { self->loop -= 1; }
 						self->id = MIN_POS_FLOAT;
 					} else {
+						self->go = 0;
 						self->id = 0.0f;
 					}
 				} else if( self->id < -1.0f ){
@@ -175,57 +176,65 @@ void function_v( func_gen_t* self
 	for(uint16_t i=0; i<b_size; i++){
 		// use self->go flag to handle paused funcs
 		// once a func is go=0, fill buffer with zeroes & return early
-
-		if( self->id >= 0.0f ){
-			move = self->rate * (*r_up2) + (*fm_in2++ * self->fm_ix);
-		} else {
-			move = self->rate * (*r_down2) + (*fm_in2++ * self->fm_ix);
-		}
-		while( move != 0.0f ){
-			if( self->id > 0.0f ){ // attack
-				self->id += move;
-				move = 0.0f;
-				if( self->id >= 1.0f ){
-					if( self->s_mode && self->sustain ){
-						// fill rest of block with 1s
+		if( self->go ){
+			if( self->id >= 0.0f ){
+				move = self->rate * (*r_up2) + (*fm_in2++ * self->fm_ix);
+			} else {
+				move = self->rate * (*r_down2) + (*fm_in2++ * self->fm_ix);
+			}
+			while( move != 0.0f ){
+				if( self->id > 0.0f ){ // attack
+					self->id += move;
+					move = 0.0f;
+					if( self->id >= 1.0f ){
+						if( self->s_mode && self->sustain ){
+							// fill rest of block with 1s
+							self->id = 1.0f;
+							for( i; i<b_size; i++ ){
+								*out2++ = self->id;
+							}
+							return;
+						}
+						move = (self->id - 1.0f) * (*r_down2) / (*r_up2);
+						self->id = -1.0f;
+					} else if( self->id < 0.0f ){ // rev TZ
+						if( self->loop ){
+							move = self->id * (*r_down2) / (*r_up2);
+							if( self->loop > 0.0f ) { self->loop++; } // TZ adds to burst!
+						}
+						self->id = 0.0f;
+					}
+				} else { // release
+					self->id += move;
+					move = 0.0f;
+					if( self->id >= 0.0f ){ // rel -> ?atk
+						if( self->loop ){
+							move = self->id * (*r_up2) / (*r_down2);
+							if( self->loop > 0 ) { self->loop--; }
+							self->id = MIN_POS_FLOAT; // get into attack case
+						} else {
+							// fill rest of block with 0s
+							self->id = 0.0f; // only for STOP
+							self->go = 0;
+							for( i; i<b_size; i++ ){
+								*out2++ = self->id;
+							}
+							return;
+						}
+					} else if( self->id < -1.0f ){ // TZ back to attack
+						move = (self->id + 1.0f) * (*r_up2) / (*r_down2);
 						self->id = 1.0f;
-						for( i; i<b_size; i++ ){
-							*out2++ = self->id;
-						}
-						return;
 					}
-					move = (self->id - 1.0f) * (*r_down2) / (*r_up2);
-					self->id = -1.0f;
-				} else if( self->id < 0.0f ){ // rev TZ
-					if( self->loop ){
-						move = self->id * (*r_down2) / (*r_up2);
-						if( self->loop > 0.0f ) { self->loop++; } // TZ adds to burst!
-					}
-					self->id = 0.0f;
-				}
-			} else { // release
-				self->id += move;
-				move = 0.0f;
-				if( self->id >= 0.0f ){ // rel -> ?atk
-					if( self->loop ){
-						move = self->id * (*r_up2) / (*r_down2);
-						if( self->loop > 0 ) { self->loop--; }
-						self->id = MIN_POS_FLOAT; // get into attack case
-					} else {
-						// fill rest of block with 0s
-						self->id = 0.0f; // only for STOP
-						for( i; i<b_size; i++ ){
-							*out2++ = self->id;
-						}
-						return;
-					}
-				} else if( self->id < -1.0f ){ // TZ back to attack
-					move = (self->id + 1.0f) * (*r_up2) / (*r_down2);
-					self->id = 1.0f;
 				}
 			}
+			*out2++ = self->id;
+			r_up2++; r_down2++;
+		} else {
+			self->id = 0.0f;
+			for( i; i<b_size; i++ ){
+				*out2++ = self->id;
+			}
+			return;
 		}
-		*out2++ = self->id;
-		r_up2++; r_down2++;
 	}
 }
