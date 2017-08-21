@@ -29,7 +29,8 @@ void function_init( func_gen_t* self, int8_t loop )
 /* function_reset is same as cutoff = -1;
    function_trig  is same as cutoff = 0; */
 
-void function_reset( func_gen_t* self, uint8_t state )
+void function_trig_reset( func_gen_t* self
+	                    , uint8_t     state )
 {
 	if(state){ // release stage/stopped
 		self->id = MIN_POS_FLOAT; // reset
@@ -37,10 +38,22 @@ void function_reset( func_gen_t* self, uint8_t state )
 	}
 	self->sustain = state;
 }
-void function_trig( func_gen_t* self, uint8_t state )
+void function_trig( func_gen_t* self
+	              , uint8_t     state )
 {
 	if(state && (self->id <= 0.0f)){ // release stage/stopped
 		self->id = MIN_POS_FLOAT; // reset
+		self->go = 1;
+	}
+	self->sustain = state;
+}
+void function_trig_sustain( func_gen_t* self
+	                      , uint8_t     state )
+{
+	if(state){ // release stage/stopped
+		if(!self->go){ // explicit start required
+			self->id = MIN_POS_FLOAT;
+		}
 		self->go = 1;
 	}
 	self->sustain = state;
@@ -63,8 +76,8 @@ void function_trig_vari( func_gen_t* self
 	self->sustain = state;
 }
 void function_trig_burst( func_gen_t* self
-	                    , uint8_t     state
-	                    , float       count )
+                        , uint8_t     state
+                        , float       count )
 {
 	// -1 is zero, 0 is 6?, +1 is 36
 	if(count <= 4.5){ // choke channel if at -5v
@@ -76,17 +89,6 @@ void function_trig_burst( func_gen_t* self
 		self->id = MIN_POS_FLOAT; // reset
 		self->go = 1;
 		self->loop = (int8_t)powf(6.0f, count + 1.0f ) - 1.0f;
-	}
-	self->sustain = state;
-}
-void function_trig_sustain( func_gen_t* self
-	                      , uint8_t     state )
-{
-	if(state){ // release stage/stopped
-		if(!self->go){ // explicit start required
-			self->id = MIN_POS_FLOAT;
-		}
-		self->go = 1;
 	}
 	self->sustain = state;
 }
