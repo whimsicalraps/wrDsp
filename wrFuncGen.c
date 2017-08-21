@@ -67,6 +67,11 @@ void function_trig_burst( func_gen_t* self
 	                    , float       count )
 {
 	// -1 is zero, 0 is 6?, +1 is 36
+	if(count <= 4.5){ // choke channel if at -5v
+		self->id = MIN_POS_FLOAT;
+		self->go = 0;
+		self->loop = 0;
+	}
 	if(state){ // release stage/stopped
 		self->id = MIN_POS_FLOAT; // reset
 		self->go = 1;
