@@ -25,15 +25,52 @@ void function_init( func_gen_t* self, int8_t loop )
 // Param Functions
 
 // Called on trigger edges only
+
+/* function_reset is same as cutoff = -1;
+   function_trig  is same as cutoff = 0; */
+
+void function_reset( func_gen_t* self, uint8_t state )
+{
+	if(state){ // release stage/stopped
+		self->id = MIN_POS_FLOAT; // reset
+		self->go = 1;
+	}
+	self->sustain = state;
+}
 void function_trig( func_gen_t* self, uint8_t state )
 {
-	// do a conditional based on id's state for vari-level
-	// <=0 is only if stopped or in release stage
-		// vari-trigger point by changing 0f
-		// positive allows retrig in attack phase
 	if(state && (self->id <= 0.0f)){ // release stage/stopped
-		self->id = MIN_POS_FLOAT;
+		self->id = MIN_POS_FLOAT; // reset
 		self->go = 1;
+	}
+	self->sustain = state;
+}
+void function_trig_vari( func_gen_t* self
+	                   , uint8_t     state
+	                   , float       cutoff )
+{
+	// -1 is always, 0 is only in release, +1 is never
+	uint8_t tr;
+	(cutoff >= 0.0f)
+		? ( tr = (self->id <= 0.0f)
+			  && (self->id > -(cutoff)) )
+		: ( tr = (self->id <= 0.0f)
+			  || (self->id > cutoff ) );
+	if(state && tr){ // release stage/stopped
+		self->id = MIN_POS_FLOAT; // reset
+		self->go = 1;
+	}
+	self->sustain = state;
+}
+void function_trig_burst( func_gen_t* self
+	                    , uint8_t     state
+	                    , float       count )
+{
+	// -1 is zero, 0 is 6?, +1 is 36
+	if(state){ // release stage/stopped
+		self->id = MIN_POS_FLOAT; // reset
+		self->go = 1;
+		self->loop = (int8_t)powf(6.0f, count + 1.0f ) - 1.0f;
 	}
 	self->sustain = state;
 }
