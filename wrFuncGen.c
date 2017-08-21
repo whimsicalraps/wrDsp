@@ -174,8 +174,6 @@ void function_v( func_gen_t* self
 	float move;
 
 	for(uint16_t i=0; i<b_size; i++){
-		// use self->go flag to handle paused funcs
-		// once a func is go=0, fill buffer with zeroes & return early
 		if( self->go ){
 			if( self->id >= 0.0f ){
 				move = self->rate * (*r_up2) + (*fm_in2++ * self->fm_ix);
