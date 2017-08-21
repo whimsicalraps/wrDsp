@@ -29,7 +29,12 @@ typedef struct func_gen{
 void function_init( func_gen_t* self, int8_t loop );
 
 // Param functions
+
+// Triggers
 void function_trig( func_gen_t* self, uint8_t state );
+void function_trig_sustain( func_gen_t* self
+	                      , uint8_t     state );
+
 void function_mode( func_gen_t* self, uint8_t mode );
 void function_loop( func_gen_t* self, int8_t loop );
 void function_sustain( func_gen_t* self, uint8_t sust );

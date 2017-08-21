@@ -79,6 +79,17 @@ void function_trig_burst( func_gen_t* self
 	}
 	self->sustain = state;
 }
+void function_trig_sustain( func_gen_t* self
+	                      , uint8_t     state )
+{
+	if(state){ // release stage/stopped
+		if(!self->go){ // explicit start required
+			self->id = MIN_POS_FLOAT;
+		}
+		self->go = 1;
+	}
+	self->sustain = state;
+}
 
 void function_mode( func_gen_t* self, uint8_t mode )
 {
