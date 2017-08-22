@@ -30,7 +30,7 @@ int8_t shaper_init( shaper_t* self, uint16_t b_size, uint16_t channels ){
 	// NB: sine & square traded places!
 void shaper_prep( shaper_t* self, float control )
 {
-	float tmp = lim_f(control * 4.0f, 0.0f, 3.99999999999f); // avoid int=4
+	float tmp = lim_f(control * 4.0f, 0.0f, 3.999999f); // avoid int=4
 	self->zone[0] = (uint8_t)tmp;
 	self->coeff[0] = tmp - (float)self->zone[0];
 }
@@ -42,7 +42,7 @@ void shaper_prep_v( shaper_t* self, float* audio, float control )
 	float tmp;
 	
 	for(uint16_t i=0; i<(self->b_size); i++){
-		tmp = lim_f((control + *audio++) * 4.0f, 0.0f, 3.99999999999f);
+		tmp = lim_f((control + *audio++) * 4.0f, 0.0f, 3.999999f);
 		*zone = (uint8_t)tmp;
 		*coeff++ = tmp - (float)*zone++;
 	}
