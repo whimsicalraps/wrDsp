@@ -68,7 +68,7 @@ void function_trig_vari( func_gen_t* self
 		? ( tr = (self->id <= 0.0f)
 			  && (self->id > -(cutoff)) )
 		: ( tr = (self->id <= 0.0f)
-			  || (self->id > cutoff ) );
+			  || (self->id > (1.0f + cutoff) ) );
 	if(state && tr){ // release stage/stopped
 		self->id = MIN_POS_FLOAT; // reset
 		self->go = 1;
@@ -79,16 +79,18 @@ void function_trig_burst( func_gen_t* self
                         , uint8_t     state
                         , float       count )
 {
-	// -1 is zero, 0 is 6?, +1 is 36
-	if(count <= 4.5){ // choke channel if at -5v
-		self->id = MIN_POS_FLOAT;
-		self->go = 0;
-		self->loop = 0;
-	}
+	// -1 is zero, 0 is 6, +1 is 36
 	if(state){ // release stage/stopped
 		self->id = MIN_POS_FLOAT; // reset
-		self->go = 1;
-		self->loop = (int8_t)powf(6.0f, count + 1.0f ) - 1.0f;
+		if(count <= -0.7f){ // choke channel if below -3v5
+			self->go = 0;
+			self->loop = 0;
+		} else {
+			self->go = 1;
+			self->loop = (int8_t)powf( 6.0f
+				                     , count + 1.0f)
+			                     - 1.0f;
+		}
 	}
 	self->sustain_state = state;
 }
