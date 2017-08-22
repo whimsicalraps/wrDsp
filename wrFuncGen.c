@@ -16,7 +16,7 @@ void function_init( func_gen_t* self, int8_t loop )
 		self->go = 1; // start if looping
 	}
 	self->s_mode     = 0;
-	self->sustain    = 0;
+	self->sustain_state    = 0;
 
 	self->r_up       = 1;
 	self->r_down     = 1;
@@ -36,7 +36,7 @@ void function_trig_reset( func_gen_t* self
 		self->id = MIN_POS_FLOAT; // reset
 		self->go = 1;
 	}
-	self->sustain = state;
+	self->sustain_state = state;
 }
 void function_trig( func_gen_t* self
 	              , uint8_t     state )
@@ -45,7 +45,7 @@ void function_trig( func_gen_t* self
 		self->id = MIN_POS_FLOAT; // reset
 		self->go = 1;
 	}
-	self->sustain = state;
+	self->sustain_state = state;
 }
 void function_trig_sustain( func_gen_t* self
 	                      , uint8_t     state )
@@ -56,7 +56,7 @@ void function_trig_sustain( func_gen_t* self
 		}
 		self->go = 1;
 	}
-	self->sustain = state;
+	self->sustain_state = state;
 }
 void function_trig_vari( func_gen_t* self
 	                   , uint8_t     state
@@ -73,7 +73,7 @@ void function_trig_vari( func_gen_t* self
 		self->id = MIN_POS_FLOAT; // reset
 		self->go = 1;
 	}
-	self->sustain = state;
+	self->sustain_state = state;
 }
 void function_trig_burst( func_gen_t* self
                         , uint8_t     state
@@ -90,7 +90,7 @@ void function_trig_burst( func_gen_t* self
 		self->go = 1;
 		self->loop = (int8_t)powf(6.0f, count + 1.0f ) - 1.0f;
 	}
-	self->sustain = state;
+	self->sustain_state = state;
 }
 
 void function_mode( func_gen_t* self, uint8_t mode )
@@ -240,7 +240,7 @@ void function_v( func_gen_t* self
 					self->id += move;
 					move = 0.0f;
 					if( self->id >= 1.0f ){
-						if( self->s_mode && self->sustain ){
+						if( self->s_mode && self->sustain_state ){
 							// fill rest of block with 1s
 							self->id = 1.0f;
 							for( i; i<b_size; i++ ){

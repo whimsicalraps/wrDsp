@@ -18,7 +18,7 @@ typedef struct func_gen{
 	float     fm_ix;
 	int8_t    loop;	// nb: -1 is infinite loop. +ve is number of retrigs left.
 	uint8_t   s_mode;
-	uint8_t   sustain;
+	uint8_t   sustain_state;
 
 
 	float     r_up;
