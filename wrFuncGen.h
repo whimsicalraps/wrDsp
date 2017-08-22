@@ -10,6 +10,12 @@
 #define FNGEN_SUSTAIN	1
 #define FNGEN_CYCLE		2
 
+typedef enum
+    { fg_transient
+    , fg_sustain
+    , fg_cycle
+    } fg_mode_t;
+
 typedef struct func_gen{
 	int8_t    go;
 	float     id;
