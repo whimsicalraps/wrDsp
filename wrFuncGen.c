@@ -38,10 +38,10 @@ void function_trig_reset( func_gen_t* self
 	}
 	self->sustain_state = state;
 }
-void function_trig( func_gen_t* self
-	              , uint8_t     state )
+void function_trig_wait( func_gen_t* self
+	                   , uint8_t     state )
 {
-	if(state && (self->id <= 0.0f)){ // release stage/stopped
+	if(state && (!self->go)){ // release stage/stopped
 		self->id = MIN_POS_FLOAT; // reset
 		self->go = 1;
 	}

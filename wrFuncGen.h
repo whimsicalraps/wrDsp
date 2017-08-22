@@ -39,7 +39,7 @@ void function_init( func_gen_t* self, int8_t loop );
 // Triggers
 void function_trig_reset  ( func_gen_t* self
 	                      , uint8_t     state );
-void function_trig        ( func_gen_t* self
+void function_trig_wait   ( func_gen_t* self
 	                      , uint8_t     state );
 void function_trig_sustain( func_gen_t* self
 	                      , uint8_t     state );
