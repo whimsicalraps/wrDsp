@@ -18,6 +18,7 @@ void function_init( func_gen_t* self, int8_t loop )
 	self->s_mode        = 0;
 	self->sustain_state = 0;
 	self->sustaining    = 0;
+	self->zc            = 0;
 	self->r_up          = 1;
 	self->r_down        = 1;
 }
@@ -91,6 +92,26 @@ void function_trig_burst( func_gen_t* self
 				                     , count + 1.0f)
 			                     - 1.0f;
 		}
+	}
+	self->sustain_state = state;
+}
+void function_trig_spill( func_gen_t* self
+	                    , uint8_t     state
+	                    , float       cutoff )
+{
+	// -1 is always, 0 is only in release, +1 is never
+	uint8_t tr;
+	(cutoff >= 0.0f)
+		? ( tr = (self->id <= 0.0f)
+			  && (self->id > -(cutoff)) )
+		: ( tr = (self->id <= 0.0f)
+			  || (self->id > (1.0f + cutoff) ) );
+	if(state && tr){ // release stage/stopped
+		self->id = -(self->id); // flip (soft-sync)
+		if(!self->go){ // explicit start required
+			self->id = MIN_POS_FLOAT;
+		}
+		self->go = 1;
 	}
 	self->sustain_state = state;
 }
@@ -224,6 +245,7 @@ void function_v( func_gen_t* self
 	float* fm_in2 = fm_in;
 
 	self->sustaining = 0;
+	self->zc = 0;
 
 	if( self->go ){
 		for(uint16_t i=0; i<b_size; i++){
@@ -250,6 +272,7 @@ void function_v( func_gen_t* self
 						move = (self->id - 1.0f) * (*r_down2) / (*r_up2);
 						self->id = -1.0f;
 					} else if( self->id < 0.0f ){ // rev TZ
+						self->zc = 1;
 						if( self->loop ){
 							move = self->id * (*r_down2) / (*r_up2);
 							if( self->loop > 0.0f ) { self->loop++; } // TZ adds to burst!
@@ -260,6 +283,7 @@ void function_v( func_gen_t* self
 					self->id += move;
 					move = 0.0f;
 					if( self->id >= 0.0f ){ // rel -> ?atk
+						self->zc = 1;
 						if( self->loop ){
 							move = self->id * (*r_up2) / (*r_down2);
 							if( self->loop > 0 ) { self->loop--; }

@@ -26,6 +26,7 @@ typedef struct func_gen{
 	uint8_t s_mode;
 	uint8_t sustain_state;
 	uint8_t sustaining;
+	uint8_t zc;
 	float   r_up;
 	float   r_down;
 } func_gen_t;
@@ -53,6 +54,10 @@ void function_trig_burst  ( func_gen_t* self
 	                      , uint8_t     state
 	                      , float       count
 	                      );
+void function_trig_spill( func_gen_t* self
+	                    , uint8_t     state
+	                    , float       cutoff
+	                    );
 
 void function_mode( func_gen_t* self, uint8_t mode );
 void function_loop( func_gen_t* self, int8_t loop );
