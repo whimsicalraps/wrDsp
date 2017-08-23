@@ -196,14 +196,8 @@ float function_step( func_gen_t* self, float fm_in )
 		}
 	}
 	return self->id;
-	// NB: this is not a triangle!
-	// assymmetric waveform for flagless rise/fall detection
-	// needs the following function to convert to ramp->tri->saw wave
-		// float scale = (self->id - 0.5) * 2.0;
-		// if( scale < -1.0 ){
-		// 	return ( -scale - 2.0 );
-		// }
-		// return scale;
+	// NB: this is +/-1 sawtooth, with 0 as 'stopped'
+	// use function_lookup(self->id) to convert
 }
 
 // compiler inlines this anyway
