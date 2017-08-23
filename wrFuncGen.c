@@ -15,11 +15,11 @@ void function_init( func_gen_t* self, int8_t loop )
 	if(loop != 0){
 		self->go = 1; // start if looping
 	}
-	self->s_mode     = 0;
-	self->sustain_state    = 0;
-
-	self->r_up       = 1;
-	self->r_down     = 1;
+	self->s_mode        = 0;
+	self->sustain_state = 0;
+	self->sustaining    = 0;
+	self->r_up          = 1;
+	self->r_down        = 1;
 }
 
 // Param Functions
@@ -228,10 +228,12 @@ void function_v( func_gen_t* self
 	float* r_up2 = r_up;
 	float* r_down2 = r_dn;
 	float* fm_in2 = fm_in;
-	float move;
 
-	for(uint16_t i=0; i<b_size; i++){
-		if( self->go ){
+	self->sustaining = 0;
+
+	if( self->go ){
+		for(uint16_t i=0; i<b_size; i++){
+			float move;
 			if( self->id >= 0.0f ){
 				move = self->rate * (*r_up2) + (*fm_in2++ * self->fm_ix);
 			} else {
@@ -244,6 +246,7 @@ void function_v( func_gen_t* self
 					if( self->id >= 1.0f ){
 						if( self->s_mode && self->sustain_state ){
 							// fill rest of block with 1s
+							self->sustaining = 1;
 							self->id = 1.0f;
 							for( i; i<b_size; i++ ){
 								*out2++ = self->id;
@@ -284,12 +287,12 @@ void function_v( func_gen_t* self
 			}
 			*out2++ = self->id;
 			r_up2++; r_down2++;
-		} else {
-			self->id = 0.0f;
-			for( i; i<b_size; i++ ){
-				*out2++ = self->id;
-			}
-			return;
+		}
+	} else {
+		self->id = 0.0f;
+		for( uint16_t i=0; i<b_size; i++ ){
+			*out2++ = self->id;
 		}
 	}
+	return;
 }
