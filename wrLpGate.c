@@ -5,10 +5,10 @@
 // private declarations
 void _lpgate_mode_select( lpgate_t* self );
 // vector modes
-void lpgate_v_hpf_filt( lpgate_t* self, float* level, float* audio, float* out );
-void lpgate_v_hpf_gate( lpgate_t* self, float* level, float* audio, float* out );
 void lpgate_v_filt(     lpgate_t* self, float* level, float* audio, float* out );
 void lpgate_v_gate(     lpgate_t* self, float* level, float* audio, float* out );
+void lpgate_v_filt_hpf( lpgate_t* self, float* level, float* audio, float* out );
+void lpgate_v_gate_hpf( lpgate_t* self, float* level, float* audio, float* out );
 
 void lpgate_init( lpgate_t* self, uint8_t hpf, uint8_t filter, uint16_t b_size )
 {
@@ -34,13 +34,14 @@ void lpgate_filter_mode( lpgate_t* self, uint8_t filter )
 }
 void _lpgate_mode_select( lpgate_t* self )
 {
-	static void (*fnptr[4])() =
-		{ lpgate_v_gate
-		, lpgate_v_filt
-		, lpgate_v_hpf_gate
-		, lpgate_v_hpf_filt
+	// filter, hpf
+	static void (*fnptr[2][2])() =
+		{ { lpgate_v_gate
+		  , lpgate_v_gate_hpf }
+		, { lpgate_v_filt
+		  , lpgate_v_filt_hpf }
 		};
-	self->lpgate_fnptr = fnptr[ self->filter | (self->hpf << 1) ];
+	self->lpgate_fnptr = fnptr[ self->filter ][ self->hpf ];
 }
 
 float lpgate_step( lpgate_t* self, float level, float in )
@@ -79,7 +80,7 @@ void lpgate_v( lpgate_t* self, float* level, float* audio, float* out )
 		                 , out );
 }
 
-void lpgate_v_hpf_filt( lpgate_t* self, float* level, float* audio, float* out )
+void lpgate_v_filt_hpf( lpgate_t* self, float* level, float* audio, float* out )
 {
 	float lpf[self->b_size]; // allows sequential processing
 	float* lpf2 = lpf;
@@ -125,7 +126,7 @@ void lpgate_v_hpf_filt( lpgate_t* self, float* level, float* audio, float* out )
 	self->prev_lo = *lpf3;
 	self->prev_hi = *out3;
 }
-void lpgate_v_hpf_gate( lpgate_t* self, float* level, float* audio, float* out )
+void lpgate_v_gate_hpf( lpgate_t* self, float* level, float* audio, float* out )
 {
 	float lpf[self->b_size]; // allows sequential processing
 	float* lpf2 = lpf;
