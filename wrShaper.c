@@ -48,7 +48,10 @@ void shaper_prep_v( shaper_t* self, float* audio, float control )
 	}
 }
 const float lut_sin_half_f = LUT_SIN_HALF;
-float shaper_apply( shaper_t* self, float input )
+float shaper_apply( shaper_t* self
+	              , float     input
+	              , uint16_t  samp
+	              )
 {
 	float ccw;
 	float fade;
@@ -59,7 +62,7 @@ float shaper_apply( shaper_t* self, float input )
 		// def room for optimization by parallelizing oscs w same params
 		// but also not the ~40% of cpu that it was prior
 
-	switch(self->zone[0]){
+	switch(self->zone[samp]){
 		case SQ_LOG:
 			if( input > 0.0f){
 				fix = input * lut_sin_half_f;
@@ -67,18 +70,21 @@ float shaper_apply( shaper_t* self, float input )
 				ccw = (fade + (fix - (uint16_t)fix)
 						* (log_lut[1 + (uint16_t)fix]
 							- fade));
+				fade = 2.5f - (self->coeff[samp] * 1.5f);
+				fade = fade * fade;
+				return lim_f_n1_1((ccw+1.0f) * fade - 1.0f);
 			} else {
+				// do the calc fully +ve then flip after squaring
 				fix = lut_sin_half_f + input * lut_sin_half_f;
 				fade = -log_lut[(uint16_t)fix];
 				ccw = (fade + (fix - (uint16_t)fix)
 						* (-log_lut[1 + (uint16_t)fix]
 							- fade));
+				fade = 2.5f - (self->coeff[samp] * 1.5f);
+				fade = fade * fade;
+				return lim_f_n1_1((ccw-1.0f) * fade + 1.0f);
+				// return max_f(ccw * fade, -1.0f);
 			}
-			fade = 6.0f - 5.0f*log_lut[ (uint16_t)(lut_sin_half_f * self->coeff[0] ) ];
-
-			// doesn't slide far enough
-			// need to force more spikeyness. somehow favour the low-pw edge
-			return lim_f_n1_1(ccw * fade);
 
 		case LOG_TRI:
 			if( input > 0.0f ){
@@ -94,7 +100,7 @@ float shaper_apply( shaper_t* self, float input )
 						* (-log_lut[1 + (uint16_t)fix]
 							- fade));
 			}
-			return (ccw + self->coeff[0]
+			return (ccw + self->coeff[samp]
 					* ((input > 0.0f ? 2.0f*input - 1.0f : -2.0f*input - 1.0f )
 						- ccw));
 
@@ -113,11 +119,13 @@ float shaper_apply( shaper_t* self, float input )
 							- fade));
 			}
 			ccw = (input > 0.0f ? 2.0f*input - 1.0f : -2.0f*input - 1.0f );
-			return (ccw + self->coeff[0]
+			return (ccw + self->coeff[samp]
 					* ((fade)
 						- ccw));
 
 		case EXP_SINE:
+		// nb: sine is identical rise/fall, so calculation should be the same
+		// just need to flip or shift the input (abs_f?)
 			if( input > 0.0f ){ // EXPO
 				fix = lut_sin_half_f - input * lut_sin_half_f;
 				fade = -log_lut[(uint16_t)fix];
@@ -133,7 +141,7 @@ float shaper_apply( shaper_t* self, float input )
 			}
 			fix = (1.0f-input) * lut_sin_half_f;
 			fade = sine_lut[(uint16_t)fix];
-			return (ccw + self->coeff[0]
+			return (ccw + self->coeff[samp]
 					* (
 						(fade + (fix - (uint16_t)fix)
 							*   ((sine_lut[1 + (uint16_t)fix])

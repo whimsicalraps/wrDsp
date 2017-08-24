@@ -20,6 +20,9 @@ typedef struct shaper{
 int8_t shaper_init( shaper_t* self, uint16_t b_size, uint16_t channels );
 void shaper_prep( shaper_t* self, float control );
 void shaper_prep_v( shaper_t* self, float* audio, float control );
-float shaper_apply( shaper_t* self, float input );
+float shaper_apply( shaper_t* self
+	              , float     input
+	              , uint16_t  samp
+	              );
 void shaper_apply_v( shaper_t* self, float* input, float* output );
 void shaper_v_p( shaper_t* self, float* inputs, float* outputs );
