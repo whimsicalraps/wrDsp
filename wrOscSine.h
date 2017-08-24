@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#define LUT_SIN_SIZE  1024
+#define LUT_SIN_SIZE  ((uint32_t)1024)
 #define LUT_SIN_HALF  (LUT_SIN_SIZE >> 1)
 extern const float sine_lut[];
 
