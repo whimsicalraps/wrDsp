@@ -56,97 +56,112 @@ float shaper_apply( shaper_t* self
 	float ccw;
 	float fade;
 	float fix;
-	uint16_t ix;
-
-	// each section is ~8%
-		// def room for optimization by parallelizing oscs w same params
-		// but also not the ~40% of cpu that it was prior
+	uint32_t ix;
+	float* lut;
 
 	switch(self->zone[samp]){
 		case SQ_LOG:
 			if( input > 0.0f){
 				fix = input * lut_sin_half_f;
-				fade = log_lut[(uint16_t)fix];
-				ccw = (fade + (fix - (uint16_t)fix)
-						* (log_lut[1 + (uint16_t)fix]
-							- fade));
+				ix  = (uint32_t)fix;
+				lut = (float*) &log_lut[ix];
+				ccw = *lut
+					  + (fix - (float)ix)
+						* (lut[1] - *lut);
 				fade = 2.5f - (self->coeff[samp] * 1.5f);
 				fade = fade * fade;
-				return lim_f_n1_1((ccw+1.0f) * fade - 1.0f);
+				return lim_f_n1_1( (ccw + 1.0f)
+					               * fade
+					               - 1.0f );
 			} else {
-				// do the calc fully +ve then flip after squaring
 				fix = lut_sin_half_f + input * lut_sin_half_f;
-				fade = -log_lut[(uint16_t)fix];
-				ccw = (fade + (fix - (uint16_t)fix)
-						* (-log_lut[1 + (uint16_t)fix]
-							- fade));
+				ix  = (uint32_t)fix;
+				lut = (float*) &log_lut[ix];
+				ccw = (fix - (float)ix)
+						* (*lut - lut[1])
+					  - *lut;
 				fade = 2.5f - (self->coeff[samp] * 1.5f);
 				fade = fade * fade;
-				return lim_f_n1_1((ccw-1.0f) * fade + 1.0f);
-				// return max_f(ccw * fade, -1.0f);
+				return lim_f_n1_1( (ccw-1.0f)
+					               * fade
+					               + 1.0f );
 			}
 
 		case LOG_TRI:
 			if( input > 0.0f ){
 				fix = input * lut_sin_half_f;
-				fade = log_lut[(uint16_t)fix];
-				ccw = (fade + (fix - (uint16_t)fix)
-						* (log_lut[1 + (uint16_t)fix]
-							- fade));
+				ix  = (uint32_t)fix;
+				lut = (float*) &log_lut[ix];
+				ccw = (*lut)
+					  + (fix - (float)ix)
+					    * (lut[1] - *lut);
 			} else {
 				fix = lut_sin_half_f + input * lut_sin_half_f;
-				fade = -log_lut[(uint16_t)fix];
-				ccw = (fade + (fix - (uint16_t)fix)
-						* (-log_lut[1 + (uint16_t)fix]
-							- fade));
+				ix  = (uint32_t)fix;
+				lut = (float*) &log_lut[ix];
+				ccw = (fix - (float)ix)
+						* (*lut - lut[1])
+					  - (*lut);
 			}
-			return (ccw + self->coeff[samp]
-					* ((input > 0.0f ? 2.0f*input - 1.0f : -2.0f*input - 1.0f )
-						- ccw));
+			return ( ccw 
+				     + self->coeff[samp]
+					   * ( ( (input > 0.0f)
+					   		 ? ( 2.0f * input - 1.0f)
+					   		 : (-2.0f * input - 1.0f) )
+					   	   - ccw)
+					     );
 
 		case TRI_EXP:
 			if( input > 0.0f ){
 				fix = lut_sin_half_f - input * lut_sin_half_f;
-				fade = -log_lut[(uint16_t)fix];
-				fade = (fade + (fix - (uint16_t)fix)
-						* (-log_lut[1 + (uint16_t)fix]
-							- fade));
+				ix  = (uint32_t)fix;
+				lut = (float*) &log_lut[ix];
+				fade = ( fix - (float)ix)
+					     * (*lut - lut[1])
+					   - *lut;
 			} else {
 				fix = -input * lut_sin_half_f;
-				fade = log_lut[(uint16_t)fix];
-				fade = (fade + (fix - (uint16_t)fix)
-						* (log_lut[1 + (uint16_t)fix]
-							- fade));
+				ix  = (uint32_t)fix;
+				lut = (float*) &log_lut[ix];
+				fade = *lut
+					   + (fix - (float)ix)
+						 * (lut[1] - *lut);
 			}
-			ccw = (input > 0.0f ? 2.0f*input - 1.0f : -2.0f*input - 1.0f );
-			return (ccw + self->coeff[samp]
-					* ((fade)
-						- ccw));
+			ccw = (input > 0.0f)
+					? ( 2.0f * input - 1.0f)
+					: (-2.0f * input - 1.0f);
+			return ( ccw
+				     + self->coeff[samp]
+					   * (fade - ccw));
 
 		case EXP_SINE:
-		// nb: sine is identical rise/fall, so calculation should be the same
-		// just need to flip or shift the input (abs_f?)
 			if( input > 0.0f ){ // EXPO
 				fix = lut_sin_half_f - input * lut_sin_half_f;
-				fade = -log_lut[(uint16_t)fix];
-				ccw = (fade + (fix - (uint16_t)fix)
-						* (-log_lut[1 + (uint16_t)fix]
-							- fade));
+				ix  = (uint32_t)fix;
+				
+				lut = (float*) &log_lut[ix];
+				fade = -log_lut[ix];
+				ccw = (fix - (float)ix)
+						* (*lut - lut[1])
+					  - (*lut);
 			} else {
 				fix = -input * lut_sin_half_f;
-				fade = log_lut[(uint16_t)fix];
-				ccw = (fade + (fix - (uint16_t)fix)
-						* (log_lut[1 + (uint16_t)fix]
-							- fade));
+				ix  = (uint32_t)fix;
+				lut = (float*) &log_lut[ix];
+				ccw = ( (*lut)
+					    + (fix - (float)ix)
+						  * (lut[1] - *lut));
 			}
 			fix = (1.0f-input) * lut_sin_half_f;
-			fade = sine_lut[(uint16_t)fix];
-			return (ccw + self->coeff[samp]
-					* (
-						(fade + (fix - (uint16_t)fix)
-							*   ((sine_lut[1 + (uint16_t)fix])
-								- fade))
-						- ccw));
+			ix  = (uint32_t)fix;
+			lut = (float*) &sine_lut[ix];
+			return ( (ccw)
+				     + self->coeff[samp]
+					   * (
+						 ( (*lut)
+						   + (fix - (float)ix)
+							 * (lut[1] - *lut))
+						 - ccw));
 
 		default: //
 			return input; // shouldn't happen
