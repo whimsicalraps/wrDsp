@@ -85,7 +85,7 @@ void osc_sine_process_v( osc_sine_t* self, uint16_t b_size, float* buf_run, floa
 	float fbase;
 	uint32_t base;
 	float mix;
-	float lut;
+	float* lut;
 
 	for( uint16_t i=0; i<b_size; i++ ){
 		odd = self->id;
@@ -108,7 +108,7 @@ void osc_sine_process_v( osc_sine_t* self, uint16_t b_size, float* buf_run, floa
 		fbase = (float)LUT_SIN_HALF * self->id;
 		base = (uint32_t)fbase;
 		mix = fbase - (float)base;
-		lut = sine_lut[base];
-		*out2++ = lut + mix * (sine_lut[base + 1] - lut);
+		lut = (float*) &sine_lut[base];
+		*out2++ = *lut + mix * (lut[1] - *lut);
 	}
 }
