@@ -76,9 +76,15 @@ float osc_sine_step( osc_sine_t* self, float fm )
 	return (lut + mix * (sine_lut[base + 1] - lut));
 }
 
-void osc_sine_process_v( osc_sine_t* self, uint16_t b_size, float* buf_run, float* out )
+void osc_sine_process_v( osc_sine_t* self
+	                   , uint16_t    b_size
+	                   , float*      exp_fm
+	                   , float*      lin_fm
+	                   , float*      out
+	                   )
 {
-	float* run2 = buf_run;
+	float* expfm = exp_fm;
+	float* linfm = lin_fm;
 	float* out2 = out;
 
 	float odd;
@@ -89,7 +95,7 @@ void osc_sine_process_v( osc_sine_t* self, uint16_t b_size, float* buf_run, floa
 
 	for( uint16_t i=0; i<b_size; i++ ){
 		odd = self->id;
-		self->id += self->rate + (*run2++);
+		self->id += self->rate * (*expfm++) + (*linfm++);
 
 		// edge & zero-cross detection
 		if( self->id >= 2.0f ){
