@@ -249,14 +249,12 @@ void function_v( func_gen_t* self
 
 	if( self->go ){
 		for(uint16_t i=0; i<b_size; i++){
-			float move;
-
-			move = (*fm_in2++ * self->fm_ix) // linear FM
-			       + self->rate              // base freq
-			         * ( (self->id >= 0.0f)    // is rising?
-			             ? (*r_up2)
-			             : (*r_down2)
-			           );
+			float move = (*fm_in2++ * self->fm_ix) // linear FM
+			             + self->rate              // base freq
+			               * ( (self->id >= 0.0f)  // is rising?
+			                   ? (*r_up2)
+			                   : (*r_down2)
+			                 );
 			while( move != 0.0f ){
 				if( self->id > 0.0f ){ // attack
 					self->id += move;
