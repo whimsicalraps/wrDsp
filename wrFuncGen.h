@@ -71,11 +71,19 @@ void function_ramp_v( uint16_t b_size, float ctrl_rate, float* audio_rate, float
 
 float function_step( func_gen_t* self, float fm_in );
 void function_v( func_gen_t* self
-	           , uint16_t b_size
-	           , float* r_up
-	           , float* r_dn
-	           , float* fm_in
-	           , float* out
+	           , uint16_t    b_size
+	           , float*      r_up
+	           , float*      r_dn
+	           , float*      fm_in
+	           , float*      out
 	           );
+void function_fmix_v( func_gen_t* self
+	                , uint16_t    b_size
+	                , float*      r_up
+	                , float*      r_dn
+	                , float*      fm_in
+	                , float*      fm_ix
+	                , float*      out
+	                );
 
 float function_lookup( float id );

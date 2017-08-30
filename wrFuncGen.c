@@ -233,11 +233,11 @@ float function_lookup( float id )
 }
 
 void function_v( func_gen_t* self
-	           , uint16_t b_size
-	           , float* r_up
-	           , float* r_dn
-	           , float* fm_in
-	           , float* out )
+	           , uint16_t    b_size
+	           , float*      r_up
+	           , float*      r_dn
+	           , float*      fm_in
+	           , float*      out )
 {
 	float* out2 = out;
 	float* r_up2 = r_up;
@@ -250,6 +250,93 @@ void function_v( func_gen_t* self
 	if( self->go ){
 		for(uint16_t i=0; i<b_size; i++){
 			float move = (*fm_in2++ * self->fm_ix) // linear FM
+			             + self->rate              // base freq
+			               * ( (self->id >= 0.0f)  // is rising?
+			                   ? (*r_up2)
+			                   : (*r_down2)
+			                 );
+			while( move != 0.0f ){
+				if( self->id > 0.0f ){ // attack
+					self->id += move;
+					move = 0.0f;
+					if( self->id >= 1.0f ){
+						if( self->s_mode && self->sustain_state ){
+							// fill rest of block with 1s
+							self->sustaining = 1;
+							self->id = 1.0f;
+							for( i; i<b_size; i++ ){
+								*out2++ = self->id;
+							}
+							return;
+						}
+						move = (self->id - 1.0f) * (*r_down2) / (*r_up2);
+						self->id = -1.0f;
+					} else if( self->id < 0.0f ){ // rev TZ
+						self->zc = 1;
+						if( self->loop ){
+							move = self->id * (*r_down2) / (*r_up2);
+							if( self->loop > 0.0f ) { self->loop++; } // TZ adds to burst!
+						}
+						self->id = 0.0f;
+					}
+				} else { // release
+					self->id += move;
+					move = 0.0f;
+					if( self->id >= 0.0f ){ // rel -> ?atk
+						self->zc = 1;
+						if( self->loop ){
+							move = self->id * (*r_up2) / (*r_down2);
+							if( self->loop > 0 ) { self->loop--; }
+							self->id = MIN_POS_FLOAT; // get into attack case
+						} else {
+							// fill rest of block with 0s
+							self->id = 0.0f; // only for STOP
+							self->go = 0;
+							for( i; i<b_size; i++ ){
+								*out2++ = self->id;
+							}
+							return;
+						}
+					} else if( self->id < -1.0f ){ // TZ back to attack
+						move = (self->id + 1.0f) * (*r_up2) / (*r_down2);
+						self->id = 1.0f;
+					}
+				}
+			}
+			*out2++ = self->id;
+			r_up2++; r_down2++;
+		}
+	} else {
+		self->id = 0.0f;
+		for( uint16_t i=0; i<b_size; i++ ){
+			*out2++ = self->id;
+		}
+	}
+	return;
+}
+void function_fmix_v( func_gen_t* self
+	                , uint16_t    b_size
+	                , float*      r_up
+	                , float*      r_dn
+	                , float*      fm_in
+	                , float*      fm_ix
+	                , float*      out
+	                )
+{
+	float* out2 = out;
+	float* r_up2 = r_up;
+	float* r_down2 = r_dn;
+	float* fm_in2 = fm_in;
+
+	self->sustaining = 0;
+	self->zc = 0;
+
+	if( self->go ){
+		for(uint16_t i=0; i<b_size; i++){
+			float move = ( *fm_in2++               // FM audio source
+			               * ( self->fm_ix         // FM pot
+			                   + 0.1 * *fm_ix++ )  // FM index adds to pot
+			               ) // linear FM
 			             + self->rate              // base freq
 			               * ( (self->id >= 0.0f)  // is rising?
 			                   ? (*r_up2)
