@@ -51,11 +51,15 @@ void function_trig_wait( func_gen_t* self
 void function_trig_sustain( func_gen_t* self
 	                      , uint8_t     state )
 {
-	if(state){ // release stage/stopped
-		if(!self->go){ // explicit start required
-			self->id = MIN_POS_FLOAT;
-		}
+	if(state && !self->go){ // stopped & high trigger
+		self->id = MIN_POS_FLOAT;
 		self->go = 1;
+	} else if( state
+		    && self->id <=0.0 ){ // release phase & high trigger
+		self->id = -(self->id); // naive flip to attack
+	} else if( !state
+		    && self->id > 0.0 ){ // attack phase & release
+		self->id = -(self->id); // naive flip to release
 	}
 	self->sustain_state = state;
 }
