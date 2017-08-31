@@ -169,6 +169,138 @@ float shaper_apply( shaper_t* self
 	return 0; // won't happen
 }
 
+// lookup functions
+float _xfade( float a, float b, float c )
+{
+    return (a + c*(b-a));
+}
+float _squ( float in )
+{
+    float f = 2.5 - (c * 1.5);
+    return (f*f);
+}
+float _log( float in )
+{
+    float    fix = in * lut_sin_half_f;
+    uint32_t ix  = (uint32_t)fix;
+    float*   lut = (float*) &log_lut[ix];
+    return _xfade( *lut
+                 , lut[1]
+                 , (fix - (float)ix)
+                 );
+}
+float _exp( float in )
+{
+    // just a backwards log lookup
+	float    fix = (1 - input) * lut_sin_half_f;
+	uint32_t ix  = (uint32_t)fix;
+	float*   lut = (float*) &log_lut[ix];
+    return _xfade( -*lut
+                 , -lut[1]
+                 , (fix - (float)ix)
+                 );
+}
+float _tri( float in )
+{
+    return (2.0 * in - 1.0);
+}
+float _sin( float in )
+{
+	float    fix = (1.0 - input) * lut_sin_half_f;
+	uint32_t ix  = (uint32_t)fix;
+	float*   lut = (float*) &sine_lut[ix];
+    return _xfade( *lut
+                 , lut[1]
+                 , (fix - (float)ix)
+                 );
+}
+
+// function pointers
+float _up_sq_lg( float in, float coeff )
+{
+	return lim_f_n1_1( ( _log(in) + 1.0 )
+					     * _squ(coeff)
+					   - 1.0
+                     );
+}
+float _dn_sq_lg( float in, float coeff )
+{
+    return lim_f_n1_1( ( _exp(-in) - 1.0 )
+					   * _squ(coeff)
+					   + 1.0
+                       );
+}
+float _up_lg_tr( float in, float coeff )
+{
+    return _xfade( _log(in)
+                 , _tri(in)
+                 , coeff
+                 );
+}
+float _dn_lg_tr( float in, float coeff )
+{
+    return _xfade( _exp(-in)
+                 , _tri(-in)
+                 , coeff
+                 );
+}
+float _up_tr_ex( float in, float coeff )
+{
+	return _xfade( _tri(in)
+                 , _exp(in)
+                 , coeff
+                 );
+}
+float _dn_tr_ex( float in, float coeff )
+{
+    return _xfade( _tri(-in)
+                 , _log(-in)
+                 , coeff
+                 );
+}
+float _up_tr_ex( float in, float coeff )
+{
+    return _xfade( _exp(in)
+                 , _sin(in)
+                 , coeff
+                 );
+}
+float _dn_tr_ex( float in, float coeff )
+{
+    return _xfade( _log(-in)
+                 , _sin(in)
+                 , coeff
+                 );
+}
+
+float shaper_apply_new( shaper_t* self
+	              , float     input
+	              , uint16_t  samp
+	              )
+{
+    typedef float (func_t)( float in
+                          , float coeff
+                          );
+    static func_t (*sh_fnptr[4][2]) =
+    { { _up_sq_lg
+      , _dn_sq_lg
+      }
+    , { _up_lg_tr
+      , _dn_lg_tr
+      }
+    , { _up_tr_ex
+      , _dn_tr_ex
+      }
+    , { _up_ex_sn
+      , _dn_ex_sn
+      } };
+
+    return _sh_fnptr[self->zone[samp]][input > 0.0]( input
+                                                   , self->coeff[samp]
+                                                   );
+}
+
+
 void shaper_apply_v( shaper_t* self, float* input, float* output ){
 	float* in2 = input;
 	float* out2 = output;
