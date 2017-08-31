@@ -48,7 +48,7 @@ void shaper_prep_v( shaper_t* self, float* audio, float control )
 	}
 }
 const float lut_sin_half_f = LUT_SIN_HALF;
-float shaper_apply( shaper_t* self
+float shaper_apply_old( shaper_t* self
 	              , float     input
 	              , uint16_t  samp
 	              )
@@ -176,8 +176,8 @@ float _xfade( float a, float b, float c )
 }
 float _squ( float in )
 {
-    float f = 2.5 - (c * 1.5);
-    return (f*f);
+    float sq = 2.5 - (in * 1.5);
+    return (sq*sq);
 }
 float _log( float in )
 {
@@ -192,7 +192,7 @@ float _log( float in )
 float _exp( float in )
 {
     // just a backwards log lookup
-	float    fix = (1 - input) * lut_sin_half_f;
+	float    fix = (1 - in) * lut_sin_half_f;
 	uint32_t ix  = (uint32_t)fix;
 	float*   lut = (float*) &log_lut[ix];
     return _xfade( -*lut
@@ -206,7 +206,7 @@ float _tri( float in )
 }
 float _sin( float in )
 {
-	float    fix = (1.0 - input) * lut_sin_half_f;
+	float    fix = (1.0 - in) * lut_sin_half_f;
 	uint32_t ix  = (uint32_t)fix;
 	float*   lut = (float*) &sine_lut[ix];
     return _xfade( *lut
@@ -258,14 +258,14 @@ float _dn_tr_ex( float in, float coeff )
                  , coeff
                  );
 }
-float _up_tr_ex( float in, float coeff )
+float _up_ex_sn( float in, float coeff )
 {
     return _xfade( _exp(in)
                  , _sin(in)
                  , coeff
                  );
 }
-float _dn_tr_ex( float in, float coeff )
+float _dn_ex_sn( float in, float coeff )
 {
     return _xfade( _log(-in)
                  , _sin(in)
@@ -273,7 +273,7 @@ float _dn_tr_ex( float in, float coeff )
                  );
 }
 
-float shaper_apply_new( shaper_t* self
+float shaper_apply( shaper_t* self
 	              , float     input
 	              , uint16_t  samp
 	              )
@@ -294,8 +294,8 @@ float shaper_apply_new( shaper_t* self
     , { _up_ex_sn
       , _dn_ex_sn
       } };
-
-    return _sh_fnptr[self->zone[samp]][input > 0.0]( input
+      // return input;
+    return sh_fnptr[self->zone[samp]][input <= 0.0]( input
                                                    , self->coeff[samp]
                                                    );
 }
