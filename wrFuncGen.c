@@ -145,7 +145,7 @@ void function_sustain( func_gen_t* self, uint8_t sust )
 
 void function_rate( func_gen_t* self, float rate )
 {
-	self->rate = lim_f_0_1( rate );
+	self->rate = lim_f_n1_1( rate );
 }
 
 void function_fm_ix( func_gen_t* self, float ix )
