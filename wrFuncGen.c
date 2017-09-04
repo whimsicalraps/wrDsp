@@ -163,7 +163,7 @@ void function_ramp( func_gen_t* self, float skew )
 	// self->r_down = 1/ (2- (1/ self->r_up));
 }
 
-void function_ramp_v( uint16_t b_size
+void function_ramp_v_global( uint16_t b_size
 	                , float ctrl_rate
 	                , float* audio_rate
 	                , float* ramp_up
@@ -173,9 +173,47 @@ void function_ramp_v( uint16_t b_size
 	float* ramp_up2 = ramp_up;
 	float* ramp_down2 = ramp_down;
 
+	// bandlimiting based on base pitch of function
 	for(uint16_t i=0;i<b_size;i++){
-		*ramp_up2 = 0.5f / (0.998f * lim_f(ctrl_rate + *audio_rate2++,0.0f,1.0f) + 0.001f);
-		*ramp_down2++ = 1.0f/ (2.0f- (1.0f/ *ramp_up2++));
+		float t = ctrl_rate + *audio_rate2++;
+		*ramp_up2 = 0.501002
+		            / ( _Lim01( t ) // careful it's a macro!
+		              + 0.001002
+		              );
+		*ramp_down2++ = *ramp_up2
+		                / ( *ramp_up2 * 2.0
+		                  - 1.0
+		                  );
+		ramp_up2++;
+	}
+}
+void function_ramp_v( func_gen_t* self
+					, uint16_t    b_size
+	                , float       ctrl_rate
+	                , float*      audio_rate
+	                , float*      ramp_up
+	                , float*      ramp_down
+	                )
+{
+	float* audio_rate2 = audio_rate;
+	float* ramp_up2 = ramp_up;
+	float* ramp_down2 = ramp_down;
+
+	float f   = fabsf(self->rate);
+	float max = 1.0 - f; // (-1,1 range)
+	float min = 0.0 + f; // (-1,1 range)
+	// bandlimiting based on base pitch of function
+	for(uint16_t i=0;i<b_size;i++){
+		float t = ctrl_rate + *audio_rate2++;
+		*ramp_up2 = 0.501002
+		            / ( _Lim( t, min, max ) // careful it's a macro!
+		              + 0.001002
+		              );
+		*ramp_down2++ = *ramp_up2
+		                / ( *ramp_up2 * 2.0
+		                  - 1.0
+		                  );
+		ramp_up2++;
 	}
 }
 

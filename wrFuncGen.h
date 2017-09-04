@@ -67,7 +67,19 @@ void function_fm_ix( func_gen_t* self, float ix );
 
 // Audio rate process
 void function_ramp( func_gen_t* self, float skew );
-void function_ramp_v( uint16_t b_size, float ctrl_rate, float* audio_rate, float* ramp_up, float* ramp_down );
+void function_ramp_v( func_gen_t* self
+				    , uint16_t    b_size
+	                , float       ctrl_rate
+	                , float*      audio_rate
+	                , float*      ramp_up
+	                , float*      ramp_down
+	                );
+void function_ramp_v_global( uint16_t b_size
+	                       , float    ctrl_rate
+	                       , float*   audio_rate
+	                       , float*   ramp_up
+	                       , float*   ramp_down
+	                       );
 
 float function_step( func_gen_t* self, float fm_in );
 void function_v( func_gen_t* self
