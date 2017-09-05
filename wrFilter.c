@@ -109,7 +109,7 @@ float awin_step( filter_awin_t* f, float input )
 	            * fabsf( windowed_avg
 				       - f->out
 				       );
-    roc = lim_f_0_1( roc * roc );
+    roc = lim_f_0_1( roc * roc ) + 0.0005;
 
 	// slope-sensitive-smoother
     f->out = lim_f_0_1( input
