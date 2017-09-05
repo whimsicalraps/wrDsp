@@ -8,10 +8,19 @@ typedef struct filter_lp1 {
 	float c;
 } filter_lp1_t;
 
+typedef struct filter_awin {
+	float*   history;
+	float    out;
+	uint16_t win_size;
+	uint16_t win_ix;
+	float    win_scale;
+	float    slope_sense;
+} filter_awin_t;
+
 typedef struct _filter_dc {
-  float c; 	   // time constant
-  float x;	   // previous input
-  float y;	   // previous output
+    float c; 	   // time constant
+    float x;	   // previous input
+    float y;	   // previous output
 } filter_dc_t;
 
 typedef struct filter_svf {
@@ -30,6 +39,10 @@ void lp1_set_coeff(filter_lp1_t* f, float c);
 void lp1_set_freq(filter_lp1_t* f, float freq);
 void lp1_step_v(filter_lp1_t* f, float* in, float* out, uint16_t size);
 void lp1_step_c_v(filter_lp1_t* f, float* out, uint16_t size);
+
+void awin_init( filter_awin_t* f, uint16_t win_size );
+void awin_slope( filter_awin_t* f, float slope_sensitivity);
+float awin_step( filter_awin_t* f, float input );
 
 // DC-Blocker: Leaky Integrator -> Differentiator
 void dc_init(filter_dc_t* f);

@@ -1,6 +1,9 @@
 #include "wrFilter.h"
-#include "../wrLib/wrMath.h"
+
 #include <math.h>
+#include <stdlib.h>
+
+#include "wrMath.h"
 
 ///////////////
 // 1Pole LPF //
@@ -71,6 +74,49 @@ void lp1_step_c_v(filter_lp1_t* f, float* out, uint16_t size)
 	}
 
 	f->y = *out3; // last output
+}
+
+
+////////////////////////////
+// AVERAGED WINDOW SMOOTH //
+////////////////////////////
+
+void awin_init( filter_awin_t* f, uint16_t win_size )
+{
+    f->out         = 0.0;
+    f->win_size    = win_size;
+	f->win_ix      = 0;
+	f->win_scale   = 1.0 / (float)(win_size + 1);
+    f->history     = malloc(sizeof(float)*win_size);
+	f->slope_sense = 1000.0 * f->win_scale; // seems a good balance at 32
+}
+void awin_slope( filter_awin_t* f, float slope_sensitivity)
+{
+    f->slope_sense = slope_sensitivity;
+}
+float awin_step( filter_awin_t* f, float input )
+{
+    float windowed_avg = input;
+	for( uint8_t i=0; i < f->win_size; i++ ){
+		windowed_avg += f->history[i];
+	}
+	windowed_avg *= f->win_scale;
+	f->history[f->win_ix++] = input;
+	if( f->win_ix >= f->win_size ){ f->win_ix=0; }
+
+    // rate of change
+	float roc = f->slope_sense
+	            * fabsf( windowed_avg
+				       - f->out
+				       );
+    roc = lim_f_0_1( roc * roc );
+
+	// slope-sensitive-smoother
+    f->out = lim_f_0_1( input
+		                 + ( 1.0 - roc )
+		                   * ( f->out - input )
+		                 );
+	return f->out;
 }
 
 
