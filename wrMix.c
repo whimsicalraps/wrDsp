@@ -14,6 +14,9 @@ int8_t mix_tanh_init(mix_tanh_t* mix, uint16_t size)
 	mix->bus_v = NULL;
 	mix->bus_v = malloc(sizeof(float)*size);
 	if( mix->bus_v == NULL ){ err = 1; }
+	for( uint16_t i=0; i<size; i++ ){
+		mix->bus_v[i] = 0.0;
+	}
 
 	return err;
 }
@@ -32,6 +35,9 @@ int8_t mix_peaks_init(mix_peaks_t* mix, uint16_t size, uint16_t chans)
 	mix->bus_v = NULL;
 	mix->bus_v = malloc(sizeof(float)*size);
 	if(mix->bus_v == NULL) { err = 2; }
+	for( uint16_t i=0; i<size; i++ ){
+		mix->bus_v[i] = 0.0;
+	}
 
 	return err;
 }
