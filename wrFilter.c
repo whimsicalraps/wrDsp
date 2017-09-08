@@ -90,7 +90,7 @@ void awin_init( filter_awin_t* f, uint16_t win_size )
 	f->history     = NULL;
     f->history     = malloc(sizeof(float)*win_size);
 	for( uint16_t i=0; i<win_size; i++ ){ f->history[i] = 0.5; }
-	f->slope_sense = 1000.0 * f->win_scale; // seems a good balance at 32
+	f->slope_sense = 6000.0 * f->win_scale;
 }
 void awin_slope( filter_awin_t* f, float slope_sensitivity)
 {
@@ -108,16 +108,18 @@ float awin_step( filter_awin_t* f, float input )
     
 	// rate of change
 	float roc = f->slope_sense
-	            * fabsf( windowed_avg
-				       - f->out
-				       );
-    roc = lim_f_0_1( roc * roc + 0.0005);
+	            * ( windowed_avg - f->out );
+
+    roc = lim_f_0_1( max_f( roc * roc
+	                      , 0.008
+						  )
+				   );
 
 	// slope-sensitive-smoother
     f->out = lim_f_0_1( input
-		                 + ( 1.0 - roc )
-		                   * ( f->out - input )
-		                 );
+		              + ( 1.0 - roc )
+		                * ( f->out - input )
+                      );
 	return f->out;
 }
 
