@@ -29,9 +29,3 @@ void osc_sine_process_v( osc_sine_t* self
 	                   , float*      exp_fm
 	                   , float*      lin_fm
 	                   , float*      out );
-
-// #if CLI_ENABLED
-// get param list
-// get param (name)
-// set param (name)
-// #endif /* CLI */

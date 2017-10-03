@@ -1,7 +1,5 @@
 #include "wrLpGate.h"
 
-#include "../STM32F4-workarea/Project/JF3-test/lib/debug.h"
-
 // private declarations
 void _lpgate_mode_select( lpgate_t* self );
 // vector modes
