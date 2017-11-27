@@ -36,6 +36,7 @@ void lp1_init(filter_lp1_t* f);
 void lp1_set_dest(filter_lp1_t* f, float in);
 float lp1_step(filter_lp1_t* f, float in);
 void lp1_set_coeff(filter_lp1_t* f, float c);
+float lp1_get_coeff(filter_lp1_t* f);
 void lp1_set_freq(filter_lp1_t* f, float freq);
 void lp1_step_v(filter_lp1_t* f, float* in, float* out, uint16_t size);
 void lp1_step_c_v(filter_lp1_t* f, float* out, uint16_t size);

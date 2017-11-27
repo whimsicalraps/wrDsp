@@ -9,7 +9,8 @@
 // 1Pole LPF //
 ///////////////
 
-void lp1_init(filter_lp1_t* f) {
+void lp1_init(filter_lp1_t* f)
+{
 	f->x = 0;
 	f->y = 0;
 	f->c = 0.97;
@@ -18,17 +19,25 @@ void lp1_set_dest(filter_lp1_t* f, float in)
 {
 	f->x = in;
 }
-float lp1_step(filter_lp1_t* f, float in) {
+float lp1_step(filter_lp1_t* f, float in)
+{
 	f->y = f->y + f->c * (in - f->y);
 	return f->y;
 }
-void lp1_set_coeff(filter_lp1_t* f, float c) {
+void lp1_set_coeff(filter_lp1_t* f, float c)
+{
 	f->c = c;
 }
-void lp1_set_freq(filter_lp1_t* f, float freq) {
+float lp1_get_coeff(filter_lp1_t* f)
+{
+    return f->c;
+}
+void lp1_set_freq(filter_lp1_t* f, float freq)
+{
 	f->c = freq/48000; // expo!
 }
-void lp1_step_v(filter_lp1_t* f, float* in, float* out, uint16_t size) {
+void lp1_step_v(filter_lp1_t* f, float* in, float* out, uint16_t size)
+{
 	float* in2=in;
 	float* out2=out;
 	float* out3=out; // point to start of arrays
