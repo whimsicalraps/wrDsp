@@ -19,7 +19,10 @@ void lpgate_init( lpgate_t* self, uint8_t hpf, uint8_t filter, uint16_t b_size )
 	self->prev_lo = 0;
 	self->prev_hi = 0;
 }
-
+void lpgate_set_level( lpgate_t* self, float level )
+{
+    self->level = level; // unused currently
+}
 void lpgate_hpf_mode( lpgate_t* self, uint8_t hpf )
 {
 	self->hpf = !!hpf; // force 0/1

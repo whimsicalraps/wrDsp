@@ -13,6 +13,7 @@
 typedef struct lpgate{
 	uint8_t hpf;
 	uint8_t filter;
+    float   level;
 	void (*lpgate_fnptr)( struct lpgate* self
 		                , float* level
 		                , float* audio
@@ -24,6 +25,7 @@ typedef struct lpgate{
 } lpgate_t;
 
 void lpgate_init( lpgate_t* self, uint8_t hpf, uint8_t filter, uint16_t b_size );
+void lpgate_set_level( lpgate_t* self, float level );
 void lpgate_hpf_mode( lpgate_t* self, uint8_t hpf );
 void lpgate_filter_mode( lpgate_t* self, uint8_t filter );
 	// level input expects (0-1)
