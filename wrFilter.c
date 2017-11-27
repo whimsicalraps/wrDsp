@@ -40,7 +40,7 @@ void lp1_step_v(filter_lp1_t* f, float* in, float* out, uint16_t size) {
 	// remainder of samps -> add nFloor early exit to avoid denormals
 	for(uint16_t i=0; i<(size-1); i++) {
 		*out2++ = (*out3) + f->c * ((*in2++) - (*out3));
-		*out3++;
+		out3++;
 	}
 
 	f->y = *out3; // last output
@@ -70,7 +70,7 @@ void lp1_step_c_v(filter_lp1_t* f, float* out, uint16_t size)
 	// remainder of samps -> add nFloor early exit to avoid denormals
 	for(uint16_t i=0; i<(size-1); i++) {
 		*out2++ = (*out3) + f->c * (f->x - (*out3));
-		*out3++;
+		out3++;
 	}
 
 	f->y = *out3; // last output
