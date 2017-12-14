@@ -34,6 +34,7 @@ typedef struct filter_svf {
 // Lowpass: 1-pole
 void lp1_init(filter_lp1_t* f);
 void lp1_set_dest(filter_lp1_t* f, float in);
+void lp1_set_out(filter_lp1_t* f, float level);
 float lp1_step(filter_lp1_t* f, float in);
 void lp1_set_coeff(filter_lp1_t* f, float c);
 float lp1_get_coeff(filter_lp1_t* f);
