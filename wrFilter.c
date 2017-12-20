@@ -171,21 +171,14 @@ float dc_step(filter_dc_t* f, float in)
 void dc_step_v(filter_dc_t* f, float* in, float* out, uint16_t size)
 {
 	float* in2=in;
-	float* in3=in; // in3 = x = previous IN
 	float* out2=out;
-	float* out3=out; // out3 = y = previous OUT	
-
-	// for first sample
-	*out2++ = (*in2++) - f->x + (f->c * f->y);
 
 	// remainder of samps
-	for(uint16_t i=0; i<(size-1); i++) {
-		*out2++ = (*in2++) - (*in3++) + (f->c * (*out3++));
+	for(uint16_t i=0; i<size; i++) {
+		f->y = *in2 - f->x + (f->c * f->y);
+		f->x = *in2++;
+		*out2++ = f->y;
 	}
-
-	// save vals
-	f->x = *in3;
-	f->y = *out3;
 }
 
 
