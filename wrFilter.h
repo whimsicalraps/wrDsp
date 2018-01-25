@@ -51,6 +51,7 @@ void  lp1_step_c_v(  filter_lp1_t* f, float*   out
 void  awin_init(  filter_awin_t* f, uint16_t win_size );
 void  awin_slope( filter_awin_t* f, float slope_sensitivity );
 float awin_step(  filter_awin_t* f, float input );
+float awin_get_out( filter_awin_t* f );
 
 // DC-Blocker: Leaky Integrator -> Differentiator
 void  dc_init(   filter_dc_t* f );

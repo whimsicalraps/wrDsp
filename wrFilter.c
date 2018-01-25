@@ -139,6 +139,10 @@ float awin_step( filter_awin_t* f, float input )
                       );
 	return f->out;
 }
+float awin_get_out( filter_awin_t* f )
+{
+    return f->out;
+}
 
 
 ////////////////
