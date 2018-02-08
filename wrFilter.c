@@ -19,6 +19,10 @@ void lp1_set_dest(filter_lp1_t* f, float in)
 {
 	f->x = in;
 }
+float lp1_get_dest( filter_lp1_t* f )
+{
+	return f->x;
+}
 void lp1_set_out(filter_lp1_t* f, float level)
 {
 	f->y = level;
@@ -30,6 +34,11 @@ float lp1_get_out( filter_lp1_t* f )
 float lp1_step(filter_lp1_t* f, float in)
 {
 	f->y = f->y + f->c * (in - f->y);
+	return f->y;
+}
+float lp1_step_internal(filter_lp1_t* f)
+{
+	f->y = f->y + f->c * (f->x - f->y);
 	return f->y;
 }
 void lp1_set_coeff(filter_lp1_t* f, float c)
