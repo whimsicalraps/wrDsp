@@ -36,9 +36,19 @@ float lp1_step(filter_lp1_t* f, float in)
 	f->y = f->y + f->c * (in - f->y);
 	return f->y;
 }
+uint8_t lp1_converged( filter_lp1_t* f )
+{
+	float diff = f->x - f->y;
+	if((diff > -nFloor) && (diff < nFloor)) { return 1; }
+	return 0;
+}
 float lp1_step_internal(filter_lp1_t* f)
 {
-	f->y = f->y + f->c * (f->x - f->y);
+    if(lp1_converged( f )){
+        f->y = f->x;
+    } else {
+	    f->y = f->y + f->c * (f->x - f->y);
+    }
 	return f->y;
 }
 void lp1_set_coeff(filter_lp1_t* f, float c)
@@ -70,12 +80,6 @@ void lp1_step_v(filter_lp1_t* f, float* in, float* out, uint16_t size)
 	}
 
 	f->y = *out3; // last output
-}
-uint8_t lp1_converged( filter_lp1_t* f )
-{
-	float diff = f->x - f->y;
-	if((diff > -nFloor) && (diff < nFloor)) { return 1; }
-	return 0;
 }
 void lp1_step_c_v(filter_lp1_t* f, float* out, uint16_t size)
 {
