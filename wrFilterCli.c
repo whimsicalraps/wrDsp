@@ -45,7 +45,8 @@ module_t* graph_lp1_init( void )
 
     return new;
 }
-extern uint16_t block_size;
+// block_size should be an arg
+//extern uint16_t block_size;
 void g_lp1_process( module_t* box )
 {
     // this will become a fnptr when adding graph optimization

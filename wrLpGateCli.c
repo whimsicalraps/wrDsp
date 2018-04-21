@@ -10,7 +10,7 @@
 // really just need sizeof(filter_lp1_t) and fnptr to lp1_init
 // >> this would mean we don't need a *Ex.c at all, only *Ex.h
 
-extern uint16_t block_size;
+//extern uint16_t block_size;
 module_t* graph_lpgate_init( void )
 {
     // allocate the graph_object

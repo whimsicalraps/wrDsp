@@ -45,7 +45,7 @@ module_t* graph_osc_sine_init( void )
 
     return new;
 }
-extern uint16_t block_size;
+//extern uint16_t block_size;
 void g_osc_sine_process( module_t* box )
 {
     // this will become a fnptr when adding graph optimization
