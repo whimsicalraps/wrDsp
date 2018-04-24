@@ -1,7 +1,7 @@
 #pragma once
 
-#include "dsp_cli.h"
 #include "wrLpGate.h" // this wraps the main DSP lib
+#include "wrCliHelpers.h"
 
 module_t* graph_lpgate_init( void );
 void g_lpgate_process( module_t* box );

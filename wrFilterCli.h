@@ -1,7 +1,7 @@
 #pragma once
 
-#include "dsp_cli.h"
 #include "wrFilter.h" // this wraps the main DSP lib
+#include "wrCliHelpers.h"
 
 module_t* graph_lp1_init( void );
 void g_lp1_process( module_t* box );

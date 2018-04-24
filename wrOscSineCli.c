@@ -1,5 +1,6 @@
 #include "wrOscSineCli.h"
 
+#include "wrCliHelpers.h"
 #include <stdlib.h>
 
 // Wrapper Init Function
@@ -12,40 +13,24 @@
 
 module_t* graph_osc_sine_init( void )
 {
-    // allocate the graph_object
-    module_t* new = malloc( sizeof(module_t) );
-
-    // allocate the objects internal structure
-    new->self = malloc( sizeof(osc_sine_t) );
-    osc_sine_init( new->self );
-
-    new->process_fnptr = g_osc_sine_process;
-
-    // metadata about the dsp object
-    new->in_count = 2;
-    new->ins = malloc( sizeof(m_in_t) * 2 );
-    new->ins[0] = (m_in_t){ .src  = NULL
-                          , .name = "EXPO FM"
-                          };
-    new->ins[1] = (m_in_t){ .src  = NULL
-                          , .name = "LINEAR FM"
-                          };
-
-    new->out_count = 1;
-    new->outs = malloc( sizeof(m_out_t) );
-    new->outs[0] = (m_out_t){ .dst  = NULL
-                            , .name = "OUT"
-                            };
-    new->par_count = 1;
-    new->pars = malloc( sizeof(m_param_t) );
-    new->pars[0] = (m_param_t){ .name = "PITCH"
-                              , .get_param = g_osc_sine_get_pitch
-                              , .set_param = g_osc_sine_set_pitch
-                              };
-
-    return new;
+// METADATA
+    module_t* box = cli_module_init( sizeof(osc_sine_t)
+                                   , (void*)osc_sine_init
+                                   , g_osc_sine_process
+                                   );
+// INS
+    cli_register_input( box, NULL, "EXPO FM"   );
+    cli_register_input( box, NULL, "LINEAR FM" );
+// OUTS
+    cli_register_output( box, "OUT" );
+// PARAMS
+    cli_register_param( box, g_osc_sine_get_pitch
+                           , g_osc_sine_set_pitch
+                           , "PITCH"
+                           );
+    return box;
 }
-extern uint16_t block_size;
+//extern uint16_t block_size;
 void g_osc_sine_process( module_t* box )
 {
     // this will become a fnptr when adding graph optimization

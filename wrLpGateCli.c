@@ -1,6 +1,7 @@
 #include "wrLpGateCli.h"
 
 #include <stdlib.h>
+#include "wrCliHelpers.h"
 
 // Wrapper Init Function
 // -- this section is the Ex wrapper that should exist in parallel to normal lib
@@ -10,50 +11,36 @@
 // really just need sizeof(filter_lp1_t) and fnptr to lp1_init
 // >> this would mean we don't need a *Ex.c at all, only *Ex.h
 
-extern uint16_t block_size;
+void _lpgate_init_wrapper( void* data )
+{
+    lpgate_init( data, 0, 0, block_size );
+}
 module_t* graph_lpgate_init( void )
 {
-    // allocate the graph_object
-    module_t* new = malloc( sizeof(module_t) );
-
-    // allocate the objects internal structure
-    new->self = malloc( sizeof(lpgate_t) );
-    lpgate_init( new->self, 0, 0, block_size );
-
-    // metadata about the dsp object
-    new->process_fnptr = g_lpgate_process;
-
-    // metadata about the dsp object
-    new->in_count = 2;
-    new->ins = malloc( sizeof(m_in_t) * new->in_count );
-    new->ins[0] = (m_in_t){ .src  = NULL
-                          , .name = "IN"
-                          };
-    new->ins[1] = (m_in_t){ .src  = NULL
-                          , .name = "LEVEL"
-                          };
-
-    new->out_count = 1;
-    new->outs = malloc( sizeof(m_out_t) );
-    new->outs[0] = (m_out_t){ .dst  = NULL
-                            , .name = "OUT"
-                            };
-    new->par_count = 3;
-    new->pars = malloc( sizeof(m_param_t) * new->par_count );
-    new->pars[0] = (m_param_t){ .name = "LEVEL"
-                              , .get_param = g_lpg_get_level
-                              , .set_param = g_lpg_set_level
-                              };
-    new->pars[1] = (m_param_t){ .name = "FILTER"
-                              , .get_param = g_lpg_get_filter
-                              , .set_param = g_lpg_set_filter
-                              };
-    new->pars[2] = (m_param_t){ .name = "HPF"
-                              , .get_param = g_lpg_get_hpf
-                              , .set_param = g_lpg_set_hpf
-                              };
-
-    return new;
+// METADATA
+    module_t* box = cli_module_init( sizeof(lpgate_t)
+                                   , (void*)_lpgate_init_wrapper
+                                   , g_lpgate_process
+                                   );
+// INS
+    cli_register_input( box, NULL, "IN"   );
+    cli_register_input( box, NULL, "LEVEL" );
+// OUTS
+    cli_register_output( box, "OUT" );
+// PARAMS
+    cli_register_param( box, g_lpg_get_level
+                           , g_lpg_set_level
+                           , "LEVEL"
+                           );
+    cli_register_param( box, g_lpg_get_filter
+                           , g_lpg_set_filter
+                           , "FILTER"
+                           );
+    cli_register_param( box, g_lpg_get_hpf
+                           , g_lpg_set_hpf
+                           , "HPF"
+                           );
+    return box;
 }
 
 void g_lpgate_process( module_t* box )

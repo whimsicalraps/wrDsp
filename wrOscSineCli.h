@@ -1,7 +1,7 @@
 #pragma once
 
-#include "dsp_cli.h"
 #include "wrOscSine.h" // this wraps the main DSP lib
+#include "wrCliHelpers.h"
 
 module_t* graph_osc_sine_init( void );
 void g_osc_sine_process( module_t* box );
