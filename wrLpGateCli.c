@@ -13,9 +13,13 @@
 
 void _lpgate_init_wrapper( void* data )
 {
-    lpgate_init( data, 0, 0, block_size );
+    // THIS BLOCK_SIZE DEFINE IS INCORRECT
+    // INIT FNS NEED TO BE SENT THE B_SIZE
+    int b_size = 256; // total guess
+    lpgate_init( data, 0, 0, b_size );
 }
-module_t* graph_lpgate_init( void )
+
+module_t* graph_lpgate_init( int b_size )
 {
 // METADATA
     module_t* box = cli_module_init( sizeof(lpgate_t)
@@ -26,7 +30,7 @@ module_t* graph_lpgate_init( void )
     cli_register_input( box, NULL, "IN"   );
     cli_register_input( box, NULL, "LEVEL" );
 // OUTS
-    cli_register_output( box, "OUT" );
+    cli_register_output( box, "OUT", b_size );
 // PARAMS
     cli_register_param( box, g_lpg_get_level
                            , g_lpg_set_level
@@ -43,13 +47,13 @@ module_t* graph_lpgate_init( void )
     return box;
 }
 
-void g_lpgate_process( module_t* box )
+void g_lpgate_process( module_t* box, int b_size )
 {
     // this will become a fnptr when adding graph optimization
 
     // these buffers won't exist after sine lib upated for optimized (no in) fns
-    float tmpx[block_size];
-    for( int i=0; i<block_size; i++ ){
+    float tmpx[b_size];
+    for( int i=0; i<b_size; i++ ){
         tmpx[i] = 1.0;
     }
     lpgate_v( box->self

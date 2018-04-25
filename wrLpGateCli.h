@@ -3,8 +3,8 @@
 #include "wrLpGate.h" // this wraps the main DSP lib
 #include "wrCliHelpers.h"
 
-module_t* graph_lpgate_init( void );
-void g_lpgate_process( module_t* box );
+module_t* graph_lpgate_init( int b_size );
+void g_lpgate_process( module_t* box, int b_size );
 void g_lpg_set_level( void* self, float l );
 float g_lpg_get_level( void* self );
 void g_lpg_set_filter( void* self, float f );
