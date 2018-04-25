@@ -20,7 +20,7 @@ const float sine_lut[LUT_SIN_SIZE + 1]={
 // initialization
 void osc_sine_init( osc_sine_t* self )
 {
-	self->rate   = 0.01f;
+	self->rate   = 0.02f;
 	self->id     = 0.0f;
 	self->zero_x = 1;
 }
