@@ -156,6 +156,12 @@ float awin_get_out( filter_awin_t* f )
 {
     return f->out;
 }
+float awin_get_in( filter_awin_t* f )
+{
+	int16_t ix = f->win_ix-1;
+	if( ix<0 ){ ix += f->win_size; }
+    return f->history[ix];
+}
 
 
 ////////////////

@@ -2,7 +2,7 @@
 #include <wrFuncGen.h>
 #include <wrMath.h>
 
-#include "../STM32F4-workarea/Project/JF3-test/lib/debug.h"
+//#include "../STM32F4-workarea/Project/JF3-test/lib/debug.h"
 
 void function_init( func_gen_t* self, int8_t loop )
 {
