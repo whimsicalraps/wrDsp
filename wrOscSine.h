@@ -29,3 +29,6 @@ void osc_sine_process_v( osc_sine_t* self
 	                   , float*      exp_fm
 	                   , float*      lin_fm
 	                   , float*      out );
+void osc_sine_process_base_v( osc_sine_t* self
+	                        , uint16_t    b_size
+	                        , float*      out );

@@ -118,3 +118,41 @@ void osc_sine_process_v( osc_sine_t* self
 		*out2++ = *lut + mix * (lut[1] - *lut);
 	}
 }
+void osc_sine_process_base_v( osc_sine_t* self
+	                        , uint16_t    b_size
+	                        , float*      out
+	                        )
+{
+	float* out2 = out;
+
+	float odd;
+	float fbase;
+	uint32_t base;
+	float mix;
+	float* lut;
+
+	for( uint16_t i=0; i<b_size; i++ ){
+		odd = self->id;
+		self->id += self->rate;
+
+		// edge & zero-cross detection
+		if( self->id >= 2.0f ){
+			self->id -= 2.0f;
+			self->zero_x = i+1;
+		} else if( (self->id >= 1.0f) && (odd < 1.0f) ){
+			self->zero_x = -(i+1);
+		} else if( self->id < 0.0f ){
+			self->id += 2.0f;
+			self->zero_x = 1;
+		} else {
+			self->zero_x = 0;
+		}
+
+		// lookup table w/ linear interpolation
+		fbase = (float)LUT_SIN_HALF * self->id;
+		base = (uint32_t)fbase;
+		mix = fbase - (float)base;
+		lut = (float*) &sine_lut[base];
+		*out2++ = *lut + mix * (lut[1] - *lut);
+	}
+}
