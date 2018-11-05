@@ -8,6 +8,12 @@ typedef struct filter_lp1 {
     float c;
 } filter_lp1_t;
 
+typedef struct filter_lp1_a {
+    float y;
+    float c_rise;
+    float c_fall;
+} filter_lp1_a_t;
+
 typedef struct filter_awin {
     float*   history;
     float    out;
@@ -50,6 +56,16 @@ void  lp1_step_c_v(  filter_lp1_t* f, float*   out
                                     , uint16_t size
                                     );
 
+// Lowpass: 1-pole assymetrical
+void  lp1_a_init(      filter_lp1_a_t* f );
+float lp1_a_step(      filter_lp1_a_t* f, float in );
+void  lp1_a_set_coeff( filter_lp1_a_t* f, float c_rise
+                                        , float c_fall );
+void  lp1_a_step_v(    filter_lp1_a_t* f, float*   in
+                                        , float*   out
+                                        , uint16_t size );
+
+// Windowed average smoother
 void  awin_init(  filter_awin_t* f, uint16_t win_size );
 void  awin_slope( filter_awin_t* f, float slope_sensitivity );
 float awin_step(  filter_awin_t* f, float input );

@@ -107,6 +107,62 @@ void lp1_step_c_v(filter_lp1_t* f, float* out, uint16_t size)
 }
 
 
+
+//////////////////////////////
+// 1Pole LPF (Assymetrical) //
+//////////////////////////////
+
+void lp1_a_init( filter_lp1_a_t* f )
+{
+	f->y      = 0;
+	f->c_rise = 0.98;
+	f->c_fall = 0.8;
+}
+float lp1_a_step( filter_lp1_a_t* f, float in )
+{
+    float c = (in > f->y) ? f->c_rise : f->c_fall;
+	f->y = f->y + c * (in - f->y);
+	return f->y;
+}
+void lp1_a_set_coeff( filter_lp1_a_t* f, float c_rise
+                                       , float c_fall
+                                       )
+{
+	f->c_rise = c_rise;
+	f->c_fall = c_fall;
+}
+void lp1_a_step_v( filter_lp1_a_t* f, float*   in
+                                    , float*   out
+                                    , uint16_t size
+                                    )
+{
+	float* in2=in;
+	float* out2=out;
+	float* out3=out;
+	// out3 = y = previous OUT
+
+    // if we match this case, we can't assume same direction this block
+    if( (in[0]      >= 0.0)
+      ^ (in[size-1] >= 0.0) ){ // frame changes direction: case on each sample
+        float c = (*in2 > f->y) ? f->c_rise : f->c_fall;
+    	*out2++ = f->y + c * ((*in2++) - f->y);
+    	for(uint16_t i=0; i<(size-1); i++) {
+            c = (*in2 > *out3) ? f->c_rise : f->c_fall;
+    		*out2++ = (*out3) + c * ((*in2++) - (*out3));
+    		out3++;
+    	}
+    } else { // assume the whole in frame is same direction relative to output
+        float c = (in[0] > f->y) ? f->c_rise : f->c_fall;
+
+    	*out2++ = f->y + c * ((*in2++) - f->y);
+    	for(uint16_t i=0; i<(size-1); i++) {
+    		*out2++ = (*out3) + c * ((*in2++) - (*out3));
+    		out3++;
+    	}
+    }
+	f->y = *out3; // last output
+}
+
 ////////////////////////////
 // AVERAGED WINDOW SMOOTH //
 ////////////////////////////
