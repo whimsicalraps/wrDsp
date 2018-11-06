@@ -163,6 +163,64 @@ void lp1_a_step_v( filter_lp1_a_t* f, float*   in
 	f->y = *out3; // last output
 }
 
+///////////////////
+// SWITCH & RAMP //
+///////////////////
+
+void switch_ramp_init( filter_sr_t* f )
+{
+    f->ramp = 0.0;
+    f->rate = 0.001; // is this per-sample step-size, or 1pole coefficient?
+}
+void switch_ramp_set_rate( filter_sr_t* f, float rate )
+{
+    f->rate = rate;
+}
+void switch_ramp_jump( filter_sr_t* f, float step_size )
+{
+    f->ramp += step_size; // accumulate in case of overlapping ramps
+}
+float* switch_ramp_step_v( filter_sr_t* f, float*   io
+                                         , uint16_t size )
+{
+    float* samp = io;
+    if( f->ramp != 0.0 ){ // passthrough if no ramp
+        if( f->ramp >= (size * f->rate) ){ // positive ramp
+            for( uint16_t i=0; i<size; i++ ){
+                *samp++ += f->ramp;
+                f->ramp -= f->rate;
+            }
+        } else if( f->ramp <= -(size * f->rate) ){ // negative ramp
+            for( uint16_t i=0; i<size; i++ ){
+                *samp++ += f->ramp;
+                f->ramp += f->rate;
+            }
+        } else { // almost zero. check each step
+            if( f->ramp > 0 ){ // pos
+                for( uint16_t i=0; i<size; i++ ){
+                    *samp++ += f->ramp;
+                    f->ramp -= f->rate;
+                    if( f->ramp <= 0.0 ){
+                        f->ramp = 0.0;
+                        break;
+                    }
+                }
+            } else { // neg
+                for( uint16_t i=0; i<size; i++ ){
+                    *samp++ += f->ramp;
+                    f->ramp += f->rate;
+                    if( f->ramp >= 0.0 ){
+                        f->ramp = 0.0;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return io;
+}
+
+
 ////////////////////////////
 // AVERAGED WINDOW SMOOTH //
 ////////////////////////////

@@ -23,6 +23,11 @@ typedef struct filter_awin {
     float    slope_sense;
 } filter_awin_t;
 
+typedef struct filter_sr {
+    float    ramp;
+    float    rate;
+} filter_sr_t;
+
 typedef struct _filter_dc {
     float c;       // time constant
     float x;       // previous input
@@ -64,6 +69,13 @@ void  lp1_a_set_coeff( filter_lp1_a_t* f, float c_rise
 void  lp1_a_step_v(    filter_lp1_a_t* f, float*   in
                                         , float*   out
                                         , uint16_t size );
+
+// Switch & Ramp: smooth discontinuities
+void switch_ramp_init( filter_sr_t* f );
+void switch_ramp_set_rate( filter_sr_t* f, float rate );
+void switch_ramp_jump( filter_sr_t* f, float step_size );
+float* switch_ramp_step_v( filter_sr_t* f, float*   io
+                                         , uint16_t size );
 
 // Windowed average smoother
 void  awin_init(  filter_awin_t* f, uint16_t win_size );
