@@ -74,10 +74,12 @@ void function_trig_vari( func_gen_t* self
 	// -1 is always, 0 is only in release, +1 is never
 	uint8_t tr;
 	(cutoff >= 0.0f)
-		? ( tr = (self->id <= 0.0f)
-			  && (self->id > -(cutoff)) )
-		: ( tr = (self->id <= 0.0f)
-			  || (self->id > (1.0f + cutoff) ) );
+        // EOR to EOC
+		? ( tr = (self->id <= 0.0f) // is falling AND
+			  && (self->id > (cutoff - 1.0f)) ) //
+        // Always to EOR
+		: ( tr = (self->id <= 0.0f) // is falling     OR
+			  || (self->id > (1.0f + cutoff) ) ); // is rising
 	if(state && tr){ // release stage/stopped
 		self->id = MIN_POS_FLOAT; // reset
 		self->go = 1;
