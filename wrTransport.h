@@ -8,6 +8,7 @@ typedef enum{ transport_motor_standard
             , transport_motor_instant
 } transport_motor_speed_t;
 
+// TODO: perhaps some of these shouldn't be floats?
 typedef struct std_speeds{
   float max_speed;
 
