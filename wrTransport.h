@@ -8,7 +8,6 @@ typedef enum{ TR_MOTOR_Standard
             , TR_MOTOR_Instant
 } TR_MOTOR_Speed_t;
 
-/// TODO: Change variable types
 typedef struct std_speeds{
   float max_speed;
 
@@ -38,8 +37,8 @@ typedef struct{
 } transport_t;
 
 uint8_t TR_init( transport_t* self, uint16_t b_size );
-void TR_deinit( transport_t* self, uint16_t b_size );
-/// TODO: ADD A DEINIT
+void TR_deinit( transport_t* self );
+
 void TR_active( transport_t*     self
               , uint8_t          active
               , TR_MOTOR_Speed_t slew

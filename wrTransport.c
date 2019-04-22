@@ -3,7 +3,10 @@
 #include <stdlib.h>
 #include "wrMath.h"
 
-// Public definitions
+/**
+  transport_init():
+    [TODO: description]
+**/
 uint8_t TR_init( transport_t* self, uint16_t b_size )
 {
     uint8_t error = 0;
@@ -11,6 +14,7 @@ uint8_t TR_init( transport_t* self, uint16_t b_size )
     self->active        = 0;
     self->tape_islocked = 0;
 
+    // default speed values
     self->speeds = (std_speeds_t) {
          .max_speed = 2.0
        , .accel_standard = 0.001
@@ -40,6 +44,21 @@ uint8_t TR_init( transport_t* self, uint16_t b_size )
     return error;
 }
 
+/**
+  transport_deinit():
+    [TODO: description]
+**/
+void TR_deinit( transport_t* self )
+{
+  free(self->speed_v);
+  free(self);
+}
+
+
+/**
+  transport_active():
+    [TODO: description]
+**/
 void TR_active( transport_t*     self
               , uint8_t          active
               , TR_MOTOR_Speed_t slew
@@ -71,6 +90,11 @@ void TR_active( transport_t*     self
     }
 }
 
+
+/**
+  transport_speed_stop():
+    [TODO: description]
+**/
 void TR_speed_stop( transport_t* self, float speed )
 {
     float tmin = -(self->speeds).max_speed;
@@ -92,6 +116,11 @@ void TR_speed_stop( transport_t* self, float speed )
                             );
 }
 
+
+/**
+  transport_speed_play():
+    [TODO: description]
+**/
 void TR_speed_play( transport_t* self, float speed )
 {
     self->speed_play = lim_f( speed
@@ -100,6 +129,11 @@ void TR_speed_play( transport_t* self, float speed )
                             );
 }
 
+
+/**
+  transport_nudge():
+    [TODO: description]
+**/
 void TR_nudge( transport_t* self, float delta )
 {
     //switch statement unlocks tape
@@ -111,17 +145,33 @@ void TR_nudge( transport_t* self, float delta )
     }
 }
 
+
+/**
+  transport_is_active():
+    [TODO: description]
+**/
 uint8_t TR_is_active( transport_t* self )
 {
     return (self->active);
 }
 
+
+/**
+  transport_get_speed():
+    [TODO: description]
+**/
 float TR_get_speed( transport_t* self )
 {
     return ((self->active)
                 ? self->speed_play
                 : self->speed_stop);
 }
+
+
+/**
+  transport_speed_block():
+    [TODO: description]
+**/
 float* TR_speed_block( transport_t* self )
 {
     lp1_set_dest( &(self->speed_slew)
@@ -177,6 +227,12 @@ float* TR_speed_block( transport_t* self )
     return self->speed_v;
 }
 
+
+
+/**
+  transport_is_tape_moving():
+    [TODO: description]
+**/
 uint8_t TR_is_tape_moving( transport_t* self )
 {
     float speed = lp1_get_out( &(self->speed_slew) );
