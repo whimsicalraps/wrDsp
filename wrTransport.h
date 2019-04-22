@@ -3,10 +3,10 @@
 #include <stdint.h>
 #include "wrFilter.h" // filter_lp1_t
 
-typedef enum{ TR_MOTOR_Standard
-            , TR_MOTOR_Quick
-            , TR_MOTOR_Instant
-} TR_MOTOR_Speed_t;
+typedef enum{ transport_motor_standard
+            , transport_motor_quick
+            , transport_motor_instant
+} transport_motor_speed_t;
 
 typedef struct std_speeds{
   float max_speed;
@@ -36,20 +36,20 @@ typedef struct{
     std_speeds_t speeds;
 } transport_t;
 
-uint8_t TR_init( transport_t* self, uint16_t b_size );
-void TR_deinit( transport_t* self );
+uint8_t transport_init( transport_t* self, uint16_t b_size );
+void transport_deinit( transport_t* self );
 
-void TR_active( transport_t*     self
+void transport_active( transport_t*     self
               , uint8_t          active
-              , TR_MOTOR_Speed_t slew
+              , transport_motor_speed_t slew
               );
-void TR_speed_stop( transport_t* self, float speed );
-void TR_speed_play( transport_t* self, float speed );
-void TR_nudge( transport_t* self, float delta );
+void transport_speed_stop( transport_t* self, float speed );
+void transport_speed_play( transport_t* self, float speed );
+void transport_nudge( transport_t* self, float delta );
 
-uint8_t TR_is_active( transport_t* self );
-float TR_get_speed( transport_t* self );
+uint8_t transport_is_active( transport_t* self );
+float transport_get_speed( transport_t* self );
 
-float* TR_speed_block( transport_t* self );
+float* transport_speed_block( transport_t* self );
 
-uint8_t TR_is_tape_moving( transport_t* self );
+uint8_t transport_is_tape_moving( transport_t* self );

@@ -7,7 +7,7 @@
   transport_init():
     [TODO: description]
 **/
-uint8_t TR_init( transport_t* self, uint16_t b_size )
+uint8_t transport_init( transport_t* self, uint16_t b_size )
 {
     uint8_t error = 0;
 
@@ -48,7 +48,7 @@ uint8_t TR_init( transport_t* self, uint16_t b_size )
   transport_deinit():
     [TODO: description]
 **/
-void TR_deinit( transport_t* self )
+void transport_deinit( transport_t* self )
 {
   free(self->speed_v);
   free(self);
@@ -59,9 +59,9 @@ void TR_deinit( transport_t* self )
   transport_active():
     [TODO: description]
 **/
-void TR_active( transport_t*     self
+void transport_active( transport_t*     self
               , uint8_t          active
-              , TR_MOTOR_Speed_t slew
+              , transport_motor_speed_t slew
               )
 {
     self->active = !!active;
@@ -71,20 +71,20 @@ void TR_active( transport_t*     self
                         : (self->speeds).accel_seek
                  );
     lp1_set_coeff( &(self->speed_slew)
-                 , (slew == TR_MOTOR_Standard)
+                 , (slew == transport_motor_standard)
                         ? (self->speeds).accel_standard
                         : (self->speeds).accel_quick
                  );
-    if( slew == TR_MOTOR_Instant ){
+    if( slew == transport_motor_instant ){
         lp1_set_out( &(self->speed_slew)
-                   , TR_get_speed( self )
+                   , transport_get_speed( self )
                    );
     }
     if( self->active ){
         //switch statement unlocks tape
         switch( self->tape_islocked ){
-            case -1: if( TR_get_speed( self ) > 0.0 ){ self->tape_islocked = 0; } break;
-            case  1: if( TR_get_speed( self ) < 0.0 ){ self->tape_islocked = 0; } break;
+            case -1: if( transport_get_speed( self ) > 0.0 ){ self->tape_islocked = 0; } break;
+            case  1: if( transport_get_speed( self ) < 0.0 ){ self->tape_islocked = 0; } break;
             default: break;
         }
     }
@@ -95,7 +95,7 @@ void TR_active( transport_t*     self
   transport_speed_stop():
     [TODO: description]
 **/
-void TR_speed_stop( transport_t* self, float speed )
+void transport_speed_stop( transport_t* self, float speed )
 {
     float tmin = -(self->speeds).max_speed;
     float tmax =  (self->speeds).max_speed;
@@ -121,7 +121,7 @@ void TR_speed_stop( transport_t* self, float speed )
   transport_speed_play():
     [TODO: description]
 **/
-void TR_speed_play( transport_t* self, float speed )
+void transport_speed_play( transport_t* self, float speed )
 {
     self->speed_play = lim_f( speed
                             , -(self->speeds).max_speed
@@ -134,7 +134,7 @@ void TR_speed_play( transport_t* self, float speed )
   transport_nudge():
     [TODO: description]
 **/
-void TR_nudge( transport_t* self, float delta )
+void transport_nudge( transport_t* self, float delta )
 {
     //switch statement unlocks tape
     self->nudge = delta;
@@ -150,7 +150,7 @@ void TR_nudge( transport_t* self, float delta )
   transport_is_active():
     [TODO: description]
 **/
-uint8_t TR_is_active( transport_t* self )
+uint8_t transport_is_active( transport_t* self )
 {
     return (self->active);
 }
@@ -160,7 +160,7 @@ uint8_t TR_is_active( transport_t* self )
   transport_get_speed():
     [TODO: description]
 **/
-float TR_get_speed( transport_t* self )
+float transport_get_speed( transport_t* self )
 {
     return ((self->active)
                 ? self->speed_play
@@ -172,10 +172,10 @@ float TR_get_speed( transport_t* self )
   transport_speed_block():
     [TODO: description]
 **/
-float* TR_speed_block( transport_t* self )
+float* transport_speed_block( transport_t* self )
 {
     lp1_set_dest( &(self->speed_slew)
-                , TR_get_speed( self )
+                , transport_get_speed( self )
                 );
 
     // apply nudge / seek
@@ -233,7 +233,7 @@ float* TR_speed_block( transport_t* self )
   transport_is_tape_moving():
     [TODO: description]
 **/
-uint8_t TR_is_tape_moving( transport_t* self )
+uint8_t transport_is_tape_moving( transport_t* self )
 {
     float speed = lp1_get_out( &(self->speed_slew) );
     if( speed < -nFloor
