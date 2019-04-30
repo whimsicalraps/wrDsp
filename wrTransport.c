@@ -3,10 +3,7 @@
 #include <stdlib.h>
 #include "wrMath.h"
 
-/**
-  transport_init():
-    [TODO: description]
-**/
+
 uint8_t transport_init( transport_t* self, uint16_t b_size )
 {
     uint8_t error = 0;
@@ -33,8 +30,8 @@ uint8_t transport_init( transport_t* self, uint16_t b_size )
 
     if( self->speed_v == NULL ){ error = 1; }
     for( uint16_t i=0; i<speed_len; i++ ){ self->speed_v[i] = 0.0; }
-    self->speed_play   = 1.0;
-    self->speed_stop   = 0.0;
+    self->speed_active   = 1.0;
+    self->speed_inactive   = 0.0;
 
     lp1_init(      &(self->speed_manual) );
     lp1_set_coeff( &(self->speed_manual), (self->speeds).accel_seek );
@@ -44,21 +41,13 @@ uint8_t transport_init( transport_t* self, uint16_t b_size )
     return error;
 }
 
-/**
-  transport_deinit():
-    [TODO: description]
-**/
+
 void transport_deinit( transport_t* self )
 {
   free(self->speed_v);
-  free(self);
 }
 
 
-/**
-  transport_active():
-    [TODO: description]
-**/
 void transport_active( transport_t*     self
               , uint8_t          active
               , transport_motor_speed_t slew
@@ -91,11 +80,7 @@ void transport_active( transport_t*     self
 }
 
 
-/**
-  transport_speed_stop():
-    [TODO: description]
-**/
-void transport_speed_stop( transport_t* self, float speed )
+void transport_speed_inactive( transport_t* self, float speed )
 {
     float tmin = -(self->speeds).max_speed;
     float tmax =  (self->speeds).max_speed;
@@ -110,30 +95,22 @@ void transport_speed_stop( transport_t* self, float speed )
             break;
         default: break;
     }
-    self->speed_stop = lim_f( speed
+    self->speed_inactive = lim_f( speed
                             , tmin
                             , tmax
                             );
 }
 
 
-/**
-  transport_speed_play():
-    [TODO: description]
-**/
-void transport_speed_play( transport_t* self, float speed )
+void transport_speed_active( transport_t* self, float speed )
 {
-    self->speed_play = lim_f( speed
+    self->speed_active = lim_f( speed
                             , -(self->speeds).max_speed
                             ,  (self->speeds).max_speed
                             );
 }
 
 
-/**
-  transport_nudge():
-    [TODO: description]
-**/
 void transport_nudge( transport_t* self, float delta )
 {
     //switch statement unlocks tape
@@ -146,32 +123,20 @@ void transport_nudge( transport_t* self, float delta )
 }
 
 
-/**
-  transport_is_active():
-    [TODO: description]
-**/
 uint8_t transport_is_active( transport_t* self )
 {
     return (self->active);
 }
 
 
-/**
-  transport_get_speed():
-    [TODO: description]
-**/
 float transport_get_speed( transport_t* self )
 {
     return ((self->active)
-                ? self->speed_play
-                : self->speed_stop);
+                ? self->speed_active
+                : self->speed_inactive);
 }
 
 
-/**
-  transport_speed_block():
-    [TODO: description]
-**/
 float* transport_speed_block( transport_t* self )
 {
     lp1_set_dest( &(self->speed_slew)
@@ -228,11 +193,6 @@ float* transport_speed_block( transport_t* self )
 }
 
 
-
-/**
-  transport_is_tape_moving():
-    [TODO: description]
-**/
 uint8_t transport_is_tape_moving( transport_t* self )
 {
     float speed = lp1_get_out( &(self->speed_slew) );
