@@ -9,21 +9,21 @@ typedef enum{ transport_motor_standard
 } transport_motor_speed_t;
 
 typedef struct{
-float max_speed;
+    float max_speed;
 
-  float accel_standard;
-  float accel_quick;
-  float accel_seek;
-  float accel_nudge;
+    float accel_standard;
+    float accel_quick;
+    float accel_seek;
+    float accel_nudge;
 
-  float nudge_release;
+    float nudge_release;
 } std_speeds_t;
 
 typedef struct{
-	  uint8_t      active;
+    uint8_t      active;
     int8_t       tape_islocked;
 
-	  filter_lp1_t speed_slew; // smoothing for speed changes
+    filter_lp1_t speed_slew; // smoothing for speed changes
     uint16_t     b_size;     // blocks per processing frame
     float*       speed_v;    // array of speeds per sample
     float        speed_active;
