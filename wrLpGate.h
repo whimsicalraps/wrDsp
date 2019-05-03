@@ -11,23 +11,27 @@
 #define LPGATE_FILTER	1
 
 typedef struct lpgate{
+    float level;
+	float* (*lpgate_fnptr)( struct lpgate* self
+		                  , float* level
+		                  , float* buffer
+		                  , int    b_size
+                          );
+	float prev_lpf;
+	float prev_out;
 	uint8_t hpf;
 	uint8_t filter;
-    float   level;
-	void (*lpgate_fnptr)( struct lpgate* self
-		                , float* level
-		                , float* audio
-		                , float* out );
-	uint16_t b_size;
-
-	float prev_lo;
-	float prev_hi;
 } lpgate_t;
 
-void lpgate_init( lpgate_t* self, uint8_t hpf, uint8_t filter, uint16_t b_size );
-void lpgate_set_level( lpgate_t* self, float level );
+lpgate_t* lpgate_init( uint8_t hpf, uint8_t filter );
+int lpgate_deinit( lpgate_t* self );
+
 void lpgate_hpf_mode( lpgate_t* self, uint8_t hpf );
 void lpgate_filter_mode( lpgate_t* self, uint8_t filter );
 	// level input expects (0-1)
 float lpgate_step( lpgate_t* self, float level, float in );
-void lpgate_v( lpgate_t* self, float* level, float* audio, float* out );
+float* lpgate_v( lpgate_t* self
+               , float*    level
+               , float*    buffer
+               , int       b_size
+               );
