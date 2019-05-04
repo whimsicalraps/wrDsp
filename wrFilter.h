@@ -29,9 +29,9 @@ typedef struct filter_sr {
 } filter_sr_t;
 
 typedef struct _filter_dc {
-    float c;       // time constant
-    float x;       // previous input
-    float y;       // previous output
+    float coeff;
+    float prev_in;
+    float prev_out;
 } filter_dc_t;
 
 typedef struct filter_svf {
@@ -85,13 +85,12 @@ float awin_get_out( filter_awin_t* f );
 float awin_get_in( filter_awin_t* f );
 
 // DC-Blocker: Leaky Integrator -> Differentiator
-void  dc_init(   filter_dc_t* f );
-void  dc_time(   filter_dc_t* f, float hpc );
-float dc_step(   filter_dc_t* f, float in );
-void  dc_step_v( filter_dc_t* f, float*   in
-                               , float*   out
-                               , uint16_t size
-                               );
+filter_dc_t* dc_init( void );
+void dc_time( filter_dc_t* self, float hpc );
+float dc_step( filter_dc_t* self, float in );
+float* dc_step_v( filter_dc_t* self, float* buffer
+                                   , int    b_size
+                                   );
 
 // State-variable: 2-pole
 void  svf_init(          filter_svf_t* f, uint8_t  mode

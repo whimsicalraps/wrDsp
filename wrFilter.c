@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "wrMath.h"
 
@@ -283,39 +284,40 @@ float awin_get_in( filter_awin_t* f )
 ////////////////
 
 // Differentiator followed by leaky integrator
-void dc_init(filter_dc_t* f)
-{
-	f->c = 0.997; // default time constant
-		// NB: lowering this val increases latency!!
-	f->x = 0;
-	f->y = 0;
+filter_dc_t* dc_init( void ){
+    filter_dc_t* self = malloc( sizeof( filter_dc_t ) );
+    if( self == NULL ){ printf("DC: malloc failed\n"); }
+
+    self->coeff    = 0.997;
+    self->prev_in  = 0.0;
+    self->prev_out = 0.0;
+
+    return self;
 }
 
-void dc_time(filter_dc_t* f, float hpc)
-{
+void dc_time( filter_dc_t* self, float hpc ){
 	// f->c = 1.0 means DC-coupling
 	// f->c = 0.0 means differentiator (only changes are passed)
-	f->c = lim_f_0_1(hpc);
+	self->coeff = lim_f_0_1( hpc );
 }
 
-float dc_step(filter_dc_t* f, float in)
-{
-	f->y = in - f->x + (f->c * f->y);
-	f->x = in; // save previous input
-	return f->y;
+float dc_step(filter_dc_t* self, float in){
+	self->prev_out = in - self->prev_in + (self->coeff * self->prev_out);
+	self->prev_in = in; // save previous input
+	return self->prev_out;
 }
 
-void dc_step_v(filter_dc_t* f, float* in, float* out, uint16_t size)
-{
-	float* in2=in;
-	float* out2=out;
-
-	// remainder of samps
-	for(uint16_t i=0; i<size; i++) {
-		f->y = *in2 - f->x + (f->c * f->y);
-		f->x = *in2++;
-		*out2++ = f->y;
-	}
+float* dc_step_v( filter_dc_t* self, float* buffer
+                                   , int    b_size
+                                   ){
+    float* in  = buffer;
+    float* out = buffer;
+    for( int i=0; i<b_size; i++ ){
+        self->prev_out = *in - self->prev_in + (self->coeff * self->prev_out);
+        self->prev_in = *in++;
+        *out++ = self->prev_out;
+    }
+    return buffer;
 }
 
 
