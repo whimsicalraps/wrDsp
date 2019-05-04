@@ -28,8 +28,8 @@ delay_t* delay_init( float max_time
         self->buffer[i] = 0.0;
     }
     self->rate = 1.0;
-    self->read = 0.0; // before _set_ms()
-    delay_set_ms( self, time ); // ->time, ->write
+    self->tap_write = 0.0; // before _set_ms()
+    delay_set_ms( self, time ); // ->time, ->tap_fb
     delay_set_feedback( self, 0.0 ); // ->feedback
     // private
 
@@ -38,7 +38,7 @@ delay_t* delay_init( float max_time
 
 void delay_set_ms( delay_t* self, float time ){
     self->time  = lim_f(time, SAMP_AS_MS, self->max_time - SAMP_AS_MS);
-    self->read = wrap( self->write - (time * MS_TO_SAMPS)
+    self->tap_fb = wrap( self->tap_write - (time * MS_TO_SAMPS)
                      , self->max_samps
                      );
 }
@@ -65,12 +65,12 @@ float delay_get_feedback( delay_t* self ){
 
 float delay_step( delay_t* self, float in ){
     float out = peek( self );
-    self->read = wrap( self->read + self->rate
+    self->tap_fb = wrap( self->tap_fb + self->rate
                      , self->max_samps
                      );
     float s = (self->rate >= 1.0) ? 1.0 : self->rate;
     poke( self, in * s + out * self->feedback );
-    self->write = wrap( self->write + self->rate
+    self->tap_write = wrap( self->tap_write + self->rate
                       , self->max_samps
                       );
     return out;
@@ -95,16 +95,16 @@ float wrap( float input, float modulo ){
 }
 
 float peek( delay_t* self ){
-    int ixA = (int)self->read;
-    int ixB = (int)wrap( self->read + 1, self->max_samps );
-    float c = self->read - (float)ixA;
+    int ixA = (int)self->tap_fb;
+    int ixB = (int)wrap( self->tap_fb + 1, self->max_samps );
+    float c = self->tap_fb - (float)ixA;
     return self->buffer[ixA] + c*(self->buffer[ixB] - self->buffer[ixA]);
 }
 
 void poke( delay_t* self, float input ){
-    int ixA = (int)self->write;
-    int ixB = (int)wrap( self->write + 1, self->max_samps );
-    float c = self->write - (float)ixA;
+    int ixA = (int)self->tap_write;
+    int ixB = (int)wrap( self->tap_write + 1, self->max_samps );
+    float c = self->tap_write - (float)ixA;
     // these coeffs seem backward to me, but reversed is terrible aliasing?!
     self->buffer[ixA] = input * c;
     self->buffer[ixB] = input * (1.0 - c);

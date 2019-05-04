@@ -3,12 +3,12 @@
 typedef struct{
     float* buffer;
     float  max_time;
+    float  max_samps;
     float  time;
     float  rate;
     float  feedback;
-    float  read;
-    float  write;
-    float  max_samps;
+    float  tap_fb;
+    float  tap_write;
 } delay_t;
 
 delay_t* delay_init( float max_time
