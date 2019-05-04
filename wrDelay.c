@@ -38,9 +38,9 @@ delay_t* delay_init( float max_time
 
 void delay_set_ms( delay_t* self, float time ){
     self->time  = lim_f(time, SAMP_AS_MS, self->max_time - SAMP_AS_MS);
-    self->write = wrap( self->read + (time * MS_TO_SAMPS)
-                      , self->max_samps
-                      );
+    self->read = wrap( self->write - (time * MS_TO_SAMPS)
+                     , self->max_samps
+                     );
 }
 
 void delay_set_time_percent( delay_t* self, float percent ){
