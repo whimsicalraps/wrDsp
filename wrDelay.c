@@ -9,7 +9,7 @@
 
 // private declarations
 float wrap( float input, float modulo );
-float peek( delay_t* self );
+float peek( delay_t* self, float tap );
 void poke( delay_t* self, float input );
 
 // public defns
@@ -28,19 +28,20 @@ delay_t* delay_init( float max_time
         self->buffer[i] = 0.0;
     }
     self->rate = 1.0;
-    self->tap_write = 0.0; // before _set_ms()
-    delay_set_ms( self, time ); // ->time, ->tap_fb
-    delay_set_feedback( self, 0.0 ); // ->feedback
-    // private
+    self->tap_write = 0.0;
+    self->tap_read  = 0.0;
+    self->tap_fb    = 0.0;
+    delay_set_ms( self, time );
+    delay_set_read_phase( self, time );
+    delay_set_feedback( self, 0.0 );
 
     return self;
 }
 
 void delay_set_ms( delay_t* self, float time ){
-    self->time  = lim_f(time, SAMP_AS_MS, self->max_time - SAMP_AS_MS);
     self->tap_fb = wrap( self->tap_write - (time * MS_TO_SAMPS)
-                     , self->max_samps
-                     );
+                       , self->max_samps
+                       );
 }
 
 void delay_set_time_percent( delay_t* self, float percent ){
@@ -51,8 +52,17 @@ void delay_set_rate( delay_t* self, float rate ){
     self->rate = lim_f( rate, 1.0/16.0, 16.0 );
 }
 
+void delay_set_read_phase( delay_t* self, float percent ){
+    self->tap_read = wrap( self->tap_write
+                           - (lim_f_0_1(percent) * self->max_time * MS_TO_SAMPS)
+                         , self->max_samps
+                         );
+}
+
 float delay_get_ms( delay_t* self ){
-    return self->time;
+    return SAMP_AS_MS * wrap( self->tap_write - self->tap_fb
+                            , self->max_samps
+                            );
 }
 
 void delay_set_feedback( delay_t* self, float feedback ){
@@ -64,15 +74,19 @@ float delay_get_feedback( delay_t* self ){
 }
 
 float delay_step( delay_t* self, float in ){
-    float out = peek( self );
     self->tap_fb = wrap( self->tap_fb + self->rate
-                     , self->max_samps
-                     );
-    float s = (self->rate >= 1.0) ? 1.0 : self->rate;
-    poke( self, in * s + out * self->feedback );
+                       , self->max_samps
+                       );
+    self->tap_read = wrap( self->tap_read + self->rate
+                         , self->max_samps
+                         );
     self->tap_write = wrap( self->tap_write + self->rate
-                      , self->max_samps
-                      );
+                          , self->max_samps
+                          );
+    float out = peek( self, self->tap_read );
+    poke( self, in * ((self->rate >= 1.0) ? 1.0 : self->rate)
+                + self->feedback * peek( self, self->tap_fb )
+              );
     return out;
 }
 
@@ -94,10 +108,10 @@ float wrap( float input, float modulo ){
     return input;
 }
 
-float peek( delay_t* self ){
-    int ixA = (int)self->tap_fb;
-    int ixB = (int)wrap( self->tap_fb + 1, self->max_samps );
-    float c = self->tap_fb - (float)ixA;
+float peek( delay_t* self, float tap ){
+    int ixA = (int)tap;
+    int ixB = (int)wrap( tap + 1, self->max_samps );
+    float c = tap - (float)ixA;
     return self->buffer[ixA] + c*(self->buffer[ixB] - self->buffer[ixA]);
 }
 
