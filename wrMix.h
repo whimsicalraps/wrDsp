@@ -5,7 +5,7 @@
 
 typedef struct mix_tanh {
 	float bus;		// mix bus
-	filter_dc_t hpf;  // hpf
+	filter_dc_t* hpf;
 	uint16_t b_size;// block size
 	float* bus_v;	// mix bus vector
 } mix_tanh_t;

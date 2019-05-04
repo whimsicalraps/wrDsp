@@ -9,7 +9,7 @@ int8_t mix_tanh_init(mix_tanh_t* mix, uint16_t size)
 {
 	int8_t err = 0;
 	mix->bus = 0;
-	dc_init(&(mix->hpf));
+	mix->hpf = dc_init();
 	mix->b_size = size;
 	mix->bus_v = NULL;
 	mix->bus_v = malloc(sizeof(float)*size);
@@ -53,7 +53,7 @@ void mix_tanh_add(mix_tanh_t* mix, float input)
 
 float mix_tanh_step(mix_tanh_t* mix)
 {
-	float tmp = dc_step(&(mix->hpf), mix->bus);
+	float tmp = dc_step( mix->hpf, mix->bus );
 	mix->bus = 0;
 	return tanh_fast(tmp);
 }
@@ -95,15 +95,20 @@ void mix_tanh_add_v(mix_tanh_t* mix, float* input)
 
 void mix_tanh_v(mix_tanh_t* mix, float* output)
 {
-	float* bus2 = mix->bus_v;
-	float tmp[mix->b_size];
+    float* bus2 = mix->bus_v;
 
-	dc_step_v( &(mix->hpf), bus2, tmp, mix->b_size);
-	tanh_fast_v(tmp, output, mix->b_size);
+    for(uint16_t i=0; i<(mix->b_size); i++){
+        output[i] = mix->bus_v[i];
+    }
+    tanh_fast_v( dc_step_v( mix->hpf
+                          , output
+                          , mix->b_size)
+               , mix->b_size
+               );
 
-	for(uint16_t i=0; i<(mix->b_size); i++){
-		*bus2++ = 0; // zero mix bus
-	}
+    for(uint16_t i=0; i<(mix->b_size); i++){
+        *bus2++ = 0; // zero mix bus
+    }
 }
 
 /////////////
