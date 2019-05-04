@@ -1,26 +1,26 @@
 #pragma once
 
-#include <stdint.h>
-
 typedef struct{
     float* buffer;
     float  max_time;
     float  time;
+    float  rate;
     float  feedback;
-    // private
-    int    max_samps;
-    int    read;
-    int    write;
+    float  read;
+    float  write;
+    float  max_samps;
 } delay_t;
 
-int    delay_init(     delay_t* self, float max_time
-                                    , float time
-                                    );
-void   delay_set_ms(   delay_t* self, float time );
-float  delay_get_ms(   delay_t* self );
+delay_t* delay_init( float max_time
+                   , float time
+                   );
+void   delay_set_ms( delay_t* self, float time );
+void   delay_set_time_percent( delay_t* self, float percent );
+void   delay_set_rate( delay_t* self, float rate );
+float  delay_get_ms( delay_t* self );
 void   delay_set_feedback( delay_t* self, float feedback );
 float  delay_get_feedback( delay_t* self );
-float  delay_step(     delay_t* self, float in );
-float* delay_step_v(   delay_t* self, float*   in
-                                    , uint16_t size
-                                    );
+float  delay_step( delay_t* self, float in );
+float* delay_step_v( delay_t* self, float* buffer
+                                  , int    b_size
+                                  );

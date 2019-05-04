@@ -1,67 +1,111 @@
 #include "wrDelay.h"
 #include <stdlib.h>
+#include <stdio.h> // printf
 #include "wrMath.h"
 
 #define SAMPLE_RATE 48000 // FIXME how to define this globally
 #define MS_TO_SAMPS (SAMPLE_RATE / 1000.0)
 #define SAMP_AS_MS  (1.0 / MS_TO_SAMPS)
 
-int delay_init( delay_t* self, float max_time
-                                 , float time
-                                 )
-{
+// private declarations
+float wrap( float input, float modulo );
+float peek( delay_t* self );
+void poke( delay_t* self, float input );
+
+// public defns
+delay_t* delay_init( float max_time
+                   , float time
+                   ){
+    delay_t* self = malloc( sizeof(delay_t) );
+    if(self == NULL){ printf("delay: couldn't malloc\n"); }
+
     self->max_time  = max_time;
-    self->max_samps = (int)(max_time * MS_TO_SAMPS);
-    self->buffer = malloc( sizeof(float) * (self->max_samps + 1) );
-    if( self->buffer == NULL ){ return 1; }
-    for( int i=0; i<(self->max_samps); i++ ){
+    self->max_samps = max_time * MS_TO_SAMPS;
+    self->buffer = malloc( sizeof(float) * (int)(self->max_samps + 1) );
+    if( self->buffer == NULL ){ printf("delay: couldn't malloc buf\n"); }
+
+    for( int i=0; i<(int)(self->max_samps + 1); i++ ){
         self->buffer[i] = 0.0;
     }
-    delay_set_ms( self, time );
-    delay_set_feedback( self, 0.0 );
+    self->rate = 1.0;
+    self->read = 0.0; // before _set_ms()
+    delay_set_ms( self, time ); // ->time, ->write
+    delay_set_feedback( self, 0.0 ); // ->feedback
     // private
-    self->read = 0;
-    return 0;
+
+    return self;
 }
 
-void delay_set_ms( delay_t* self, float time )
-{
+void delay_set_ms( delay_t* self, float time ){
     self->time  = lim_f(time, SAMP_AS_MS, self->max_time - SAMP_AS_MS);
-    self->write = (self->read + (int)(time * MS_TO_SAMPS))
-                    % self->max_samps;
+    self->write = wrap( self->read + (time * MS_TO_SAMPS)
+                      , self->max_samps
+                      );
 }
 
-float delay_get_ms( delay_t* self )
-{
+void delay_set_time_percent( delay_t* self, float percent ){
+    delay_set_ms( self, self->max_time * lim_f_0_1(percent) );
+}
+
+void delay_set_rate( delay_t* self, float rate ){
+    self->rate = lim_f( rate, 1.0/16.0, 16.0 );
+}
+
+float delay_get_ms( delay_t* self ){
     return self->time;
 }
 
-void delay_set_feedback( delay_t* self, float feedback )
-{
+void delay_set_feedback( delay_t* self, float feedback ){
     self->feedback = lim_f( feedback, -0.999, 0.999 );
 }
 
-float delay_get_feedback( delay_t* self )
-{
+float delay_get_feedback( delay_t* self ){
     return self->feedback;
 }
 
-float delay_step( delay_t* self, float in )
-{
-    float out = self->buffer[self->read++];
-    self->read %= self->max_samps;
-    self->buffer[self->write++] = in + out * self->feedback;
-    self->write %= self->max_samps;
+float delay_step( delay_t* self, float in ){
+    float out = peek( self );
+    self->read = wrap( self->read + self->rate
+                     , self->max_samps
+                     );
+    float s = (self->rate >= 1.0) ? 1.0 : self->rate;
+    poke( self, in * s + out * self->feedback );
+    self->write = wrap( self->write + self->rate
+                      , self->max_samps
+                      );
     return out;
 }
-float* delay_step_v( delay_t* self, float*   in
-                                      , uint16_t size
-                                      )
-{
-    float* in2 = in;
-    for( int i=0; i<size; i++ ){
-        *in2 = delay_step( self, *in2 );
-        in2++;
+
+float* delay_step_v( delay_t* self, float* buffer
+                                  , int    b_size
+                                  ){
+    float* in  = buffer;
+    float* out = buffer;
+    for( int i=0; i<b_size; i++ ){
+        *out++ = delay_step( self, *in++ );
     }
-    return in;
+    return buffer;
+}
+
+// private defns
+float wrap( float input, float modulo ){
+    while( input >= modulo ){ input -= modulo; }
+    while( input < 0.0 ){ input += modulo; }
+    return input;
+}
+
+float peek( delay_t* self ){
+    int ixA = (int)self->read;
+    int ixB = (int)wrap( self->read + 1, self->max_samps );
+    float c = self->read - (float)ixA;
+    return self->buffer[ixA] + c*(self->buffer[ixB] - self->buffer[ixA]);
+}
+
+void poke( delay_t* self, float input ){
+    int ixA = (int)self->write;
+    int ixB = (int)wrap( self->write + 1, self->max_samps );
+    float c = self->write - (float)ixA;
+    // these coeffs seem backward to me, but reversed is terrible aliasing?!
+    self->buffer[ixA] = input * c;
+    self->buffer[ixB] = input * (1.0 - c);
 }
