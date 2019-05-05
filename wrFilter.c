@@ -18,6 +18,10 @@ filter_lp1_t* lp1_init(void){
 	self->c = 0.97;
     return self;
 }
+void lp1_deinit( filter_lp1_t* f ){
+    free(f);
+}
+
 void lp1_set_dest(filter_lp1_t* f, float in)
 {
 	f->x = in;
@@ -178,6 +182,10 @@ filter_sr_t* switch_ramp_init( void )
     self->rate = 0.001; // per-sample step-size, or 1pole coefficient?
     return self;
 }
+void switch_ramp_deinit( filter_sr_t* f ){
+    free(f);
+}
+
 void switch_ramp_set_rate( filter_sr_t* f, float rate )
 {
     f->rate = rate;
@@ -298,6 +306,9 @@ filter_dc_t* dc_init( void ){
     self->prev_out = 0.0;
 
     return self;
+}
+void dc_deinit( filter_dc_t* self ){
+    free(self);
 }
 
 void dc_time( filter_dc_t* self, float hpc ){

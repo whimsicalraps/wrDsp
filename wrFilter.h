@@ -44,6 +44,7 @@ typedef struct filter_svf {
 
 // Lowpass: 1-pole
 filter_lp1_t* lp1_init(void);
+void  lp1_deinit(    filter_lp1_t* f );
 void  lp1_set_dest(  filter_lp1_t* f, float in );
 float lp1_get_dest(  filter_lp1_t* f );
 void  lp1_set_out(   filter_lp1_t* f, float level );
@@ -72,6 +73,7 @@ void  lp1_a_step_v(    filter_lp1_a_t* f, float*   in
 
 // Switch & Ramp: smooth discontinuities
 filter_sr_t* switch_ramp_init( void );
+void switch_ramp_deinit( filter_sr_t* f );
 void switch_ramp_set_rate( filter_sr_t* f, float rate );
 void switch_ramp_jump( filter_sr_t* f, float step_size );
 float* switch_ramp_step_v( filter_sr_t* f, float* io
@@ -86,6 +88,7 @@ float awin_get_in( filter_awin_t* f );
 
 // DC-Blocker: Leaky Integrator -> Differentiator
 filter_dc_t* dc_init( void );
+void dc_deinit( filter_dc_t* self );
 void dc_time( filter_dc_t* self, float hpc );
 float dc_step( filter_dc_t* self, float in );
 float* dc_step_v( filter_dc_t* self, float* buffer
