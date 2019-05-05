@@ -119,12 +119,21 @@ void lp1_step_c_v(filter_lp1_t* f, float* out, uint16_t size)
 // 1Pole LPF (Assymetrical) //
 //////////////////////////////
 
-void lp1_a_init( filter_lp1_a_t* f )
+filter_lp1_a_t* lp1_a_init( void )
 {
-	f->y      = 0;
-	f->c_rise = 0.98;
-	f->c_fall = 0.8;
+    filter_lp1_a_t* self = malloc( sizeof( lp1_a_init ) );
+    if( !self ){ printf("Lp1_A malloc failed\n"); return NULL; }
+	self->y      = 0;
+	self->c_rise = 0.98;
+	self->c_fall = 0.8;
+    return self;
 }
+
+void lp1_a_deinit( filter_lp1_a_t* self )
+{
+    free(self); self = NULL;
+}
+
 float lp1_a_step( filter_lp1_a_t* f, float in )
 {
     float c = (in > f->y) ? f->c_rise : f->c_fall;
@@ -239,17 +248,29 @@ float* switch_ramp_step_v( filter_sr_t* f, float* io
 // AVERAGED WINDOW SMOOTH //
 ////////////////////////////
 
-void awin_init( filter_awin_t* f, uint16_t win_size )
+filter_awin_t* awin_init( int win_size )
 {
-    f->out         = 0.5;
-    f->win_size    = win_size;
-	f->win_ix      = 0;
-	f->win_scale   = 1.0 / (float)(win_size + 1);
-	f->history     = NULL;
-    f->history     = malloc(sizeof(float)*win_size);
-	for( uint16_t i=0; i<win_size; i++ ){ f->history[i] = 0.5; }
-	f->slope_sense = 6000.0 * f->win_scale;
+    filter_awin_t* self = malloc( sizeof( filter_awin_t ) );
+    if( !self ){ printf("awin malloc failed\n"); return NULL; }
+    self->out         = 0.5;
+    self->win_size    = win_size;
+	self->win_ix      = 0;
+	self->win_scale   = 1.0 / (float)(win_size + 1);
+
+    self->history     = malloc(sizeof(float)*win_size);
+    if( !self->history ){ printf("history!\n"); return NULL; }
+	for( int i=0; i<win_size; i++ ){ self->history[i] = 0.5; }
+
+	self->slope_sense = 6000.0 * self->win_scale;
+    return self;
 }
+
+void awin_deinit( filter_awin_t* self )
+{
+    free(self->history); self->history = NULL;
+    free(self); self = NULL;
+}
+
 void awin_slope( filter_awin_t* f, float slope_sensitivity)
 {
     f->slope_sense = slope_sensitivity;
@@ -257,7 +278,7 @@ void awin_slope( filter_awin_t* f, float slope_sensitivity)
 float awin_step( filter_awin_t* f, float input )
 {
     float windowed_avg = input;
-	for( uint8_t i=0; i < f->win_size; i++ ){
+	for( int i=0; i<(f->win_size); i++ ){
 		windowed_avg += f->history[i];
 	}
 	windowed_avg *= f->win_scale;
@@ -286,7 +307,7 @@ float awin_get_out( filter_awin_t* f )
 }
 float awin_get_in( filter_awin_t* f )
 {
-	int16_t ix = f->win_ix-1;
+	int16_t ix = (f->win_ix)-1;
 	if( ix<0 ){ ix += f->win_size; }
     return f->history[ix];
 }
@@ -341,15 +362,23 @@ float* dc_step_v( filter_dc_t* self, float* buffer
 // State-variable: 2-pole //
 ////////////////////////////
 
-void svf_init(filter_svf_t* f, uint8_t mode, uint32_t sample_rate) {
-	f->x[0] = 0;
-	f->x[1] = 0;
-	f->x[2] = 0;
-	f->q = 0.5;
-	f->c = 0.02;
-	f->mode = mode;
-    f->sample_rate = sample_rate;
+filter_svf_t* svf_init( uint8_t mode, int sample_rate ){
+    filter_svf_t* self = malloc( sizeof( filter_svf_t ) );
+    if( !self ){ printf("SVF malloc failed\n"); return NULL; }
+	self->x[0]        = 0;
+	self->x[1]        = 0;
+	self->x[2]        = 0;
+	self->q           = 0.5;
+	self->c           = 0.02;
+	self->mode        = mode;
+    self->sample_rate = sample_rate;
+    return self;
 }
+
+void svf_deinit( filter_svf_t* self ){
+    free(self); self = NULL;
+}
+
 void svf_set_mode(filter_svf_t* f, uint8_t mode) {
 	f->mode = mode;
 }

@@ -15,12 +15,12 @@ typedef struct filter_lp1_a {
 } filter_lp1_a_t;
 
 typedef struct filter_awin {
-    float*   history;
-    float    out;
-    uint16_t win_size;
-    uint16_t win_ix;
-    float    win_scale;
-    float    slope_sense;
+    float* history;
+    float  out;
+    int    win_size;
+    int    win_ix;
+    float  win_scale;
+    float  slope_sense;
 } filter_awin_t;
 
 typedef struct filter_sr {
@@ -35,11 +35,11 @@ typedef struct _filter_dc {
 } filter_dc_t;
 
 typedef struct filter_svf {
-    float x[3];
-    float q;
-    float c;
+    float   x[3];
+    float   q;
+    float   c;
     uint8_t mode;
-    uint32_t sample_rate;
+    int     sample_rate;
 } filter_svf_t;
 
 // Lowpass: 1-pole
@@ -63,13 +63,14 @@ void  lp1_step_c_v(  filter_lp1_t* f, float*   out
                                     );
 
 // Lowpass: 1-pole assymetrical
-void  lp1_a_init(      filter_lp1_a_t* f );
-float lp1_a_step(      filter_lp1_a_t* f, float in );
-void  lp1_a_set_coeff( filter_lp1_a_t* f, float c_rise
-                                        , float c_fall );
-void  lp1_a_step_v(    filter_lp1_a_t* f, float*   in
-                                        , float*   out
-                                        , uint16_t size );
+filter_lp1_a_t* lp1_a_init( void );
+void lp1_a_deinit( filter_lp1_a_t* self );
+float lp1_a_step( filter_lp1_a_t* f, float in );
+void lp1_a_set_coeff( filter_lp1_a_t* f, float c_rise
+                                       , float c_fall );
+void lp1_a_step_v( filter_lp1_a_t* f, float*   in
+                                    , float*   out
+                                    , uint16_t size );
 
 // Switch & Ramp: smooth discontinuities
 filter_sr_t* switch_ramp_init( void );
@@ -80,7 +81,8 @@ float* switch_ramp_step_v( filter_sr_t* f, float* io
                                          , int    size );
 
 // Windowed average smoother
-void  awin_init(  filter_awin_t* f, uint16_t win_size );
+filter_awin_t* awin_init( int win_size );
+void awin_deinit( filter_awin_t* self );
 void  awin_slope( filter_awin_t* f, float slope_sensitivity );
 float awin_step(  filter_awin_t* f, float input );
 float awin_get_out( filter_awin_t* f );
@@ -96,9 +98,8 @@ float* dc_step_v( filter_dc_t* self, float* buffer
                                    );
 
 // State-variable: 2-pole
-void  svf_init(          filter_svf_t* f, uint8_t  mode
-                                        , uint32_t sample_rate
-                                        );
+filter_svf_t* svf_init( uint8_t mode, int sample_rate );
+void svf_deinit( filter_svf_t* self );
 float svf_process_frame( filter_svf_t* f, float input );
 float svf_step(          filter_svf_t* f, float input );
 void  svf_set_mode(      filter_svf_t* f, uint8_t mode );
