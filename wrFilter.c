@@ -10,11 +10,13 @@
 // 1Pole LPF //
 ///////////////
 
-void lp1_init(filter_lp1_t* f)
-{
-	f->x = 0;
-	f->y = 0;
-	f->c = 0.97;
+filter_lp1_t* lp1_init(void){
+    filter_lp1_t* self = malloc( sizeof( filter_lp1_t ) );
+    if( !self ){ printf("Lp1: malloc failed\n"); return NULL; }
+	self->x = 0;
+	self->y = 0;
+	self->c = 0.97;
+    return self;
 }
 void lp1_set_dest(filter_lp1_t* f, float in)
 {
@@ -168,10 +170,13 @@ void lp1_a_step_v( filter_lp1_a_t* f, float*   in
 // SWITCH & RAMP //
 ///////////////////
 
-void switch_ramp_init( filter_sr_t* f )
+filter_sr_t* switch_ramp_init( void )
 {
-    f->ramp = 0.0;
-    f->rate = 0.001; // is this per-sample step-size, or 1pole coefficient?
+    filter_sr_t* self = malloc( sizeof( filter_sr_t ) );
+    if( !self ){ printf("SR: malloc failed\n"); return NULL; }
+    self->ramp = 0.0;
+    self->rate = 0.001; // per-sample step-size, or 1pole coefficient?
+    return self;
 }
 void switch_ramp_set_rate( filter_sr_t* f, float rate )
 {
@@ -181,24 +186,24 @@ void switch_ramp_jump( filter_sr_t* f, float step_size )
 {
     f->ramp += step_size; // accumulate in case of overlapping ramps
 }
-float* switch_ramp_step_v( filter_sr_t* f, float*   io
-                                         , uint16_t size )
-{
+float* switch_ramp_step_v( filter_sr_t* f, float* io
+                                         , int    b_size
+                                         ){
     float* samp = io;
     if( f->ramp != 0.0 ){ // passthrough if no ramp
-        if( f->ramp >= (size * f->rate) ){ // positive ramp
-            for( uint16_t i=0; i<size; i++ ){
+        if( f->ramp >= (b_size * f->rate) ){ // positive ramp
+            for( int i=0; i<b_size; i++ ){
                 *samp++ += f->ramp;
                 f->ramp -= f->rate;
             }
-        } else if( f->ramp <= -(size * f->rate) ){ // negative ramp
-            for( uint16_t i=0; i<size; i++ ){
+        } else if( f->ramp <= -(b_size * f->rate) ){ // negative ramp
+            for( int i=0; i<b_size; i++ ){
                 *samp++ += f->ramp;
                 f->ramp += f->rate;
             }
         } else { // almost zero. check each step
             if( f->ramp > 0 ){ // pos
-                for( uint16_t i=0; i<size; i++ ){
+                for( int i=0; i<b_size; i++ ){
                     *samp++ += f->ramp;
                     f->ramp -= f->rate;
                     if( f->ramp <= 0.0 ){
@@ -207,7 +212,7 @@ float* switch_ramp_step_v( filter_sr_t* f, float*   io
                     }
                 }
             } else { // neg
-                for( uint16_t i=0; i<size; i++ ){
+                for( int i=0; i<b_size; i++ ){
                     *samp++ += f->ramp;
                     f->ramp += f->rate;
                     if( f->ramp >= 0.0 ){

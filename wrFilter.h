@@ -43,7 +43,7 @@ typedef struct filter_svf {
 } filter_svf_t;
 
 // Lowpass: 1-pole
-void  lp1_init(      filter_lp1_t* f );
+filter_lp1_t* lp1_init(void);
 void  lp1_set_dest(  filter_lp1_t* f, float in );
 float lp1_get_dest(  filter_lp1_t* f );
 void  lp1_set_out(   filter_lp1_t* f, float level );
@@ -71,11 +71,11 @@ void  lp1_a_step_v(    filter_lp1_a_t* f, float*   in
                                         , uint16_t size );
 
 // Switch & Ramp: smooth discontinuities
-void switch_ramp_init( filter_sr_t* f );
+filter_sr_t* switch_ramp_init( void );
 void switch_ramp_set_rate( filter_sr_t* f, float rate );
 void switch_ramp_jump( filter_sr_t* f, float step_size );
-float* switch_ramp_step_v( filter_sr_t* f, float*   io
-                                         , uint16_t size );
+float* switch_ramp_step_v( filter_sr_t* f, float* io
+                                         , int    size );
 
 // Windowed average smoother
 void  awin_init(  filter_awin_t* f, uint16_t win_size );
