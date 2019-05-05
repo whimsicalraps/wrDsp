@@ -4,7 +4,6 @@ typedef struct{
     float* buffer;
     float  max_time;
     float  max_samps;
-    float  time;
     float  rate;
     float  feedback;
     float  tap_fb;
