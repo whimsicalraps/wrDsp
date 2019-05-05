@@ -46,8 +46,10 @@ transport_t* transport_init( uint16_t b_size )
 
 void transport_deinit( transport_t* self )
 {
-    free(self->speed_v);
-    free(self);
+    lp1_deinit( self->speed_manual );
+    free(self->speed_v); self->speed_v = NULL;
+    lp1_deinit( self->speed_slew );
+    free(self); self = NULL;
 }
 
 

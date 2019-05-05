@@ -23,10 +23,9 @@ lpgate_t* lpgate_init( uint8_t hpf
     return self;
 }
 
-int lpgate_deinit( lpgate_t* self
-                 ){
-    free(self);
-    return 0;
+void lpgate_deinit( lpgate_t* self
+                  ){
+    free(self); self = NULL;
 }
 
 void lpgate_hpf_mode( lpgate_t* self

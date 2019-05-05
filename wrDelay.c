@@ -43,8 +43,8 @@ delay_t* delay_init( float max_time
 }
 
 void delay_deinit( delay_t* self ){
-    free(self->buffer);
-    free(self);
+    free(self->buffer); self->buffer = NULL;
+    free(self); self = NULL;
 }
 
 void delay_set_ms( delay_t* self, float time ){

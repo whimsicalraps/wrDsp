@@ -24,7 +24,7 @@ typedef struct lpgate{
 } lpgate_t;
 
 lpgate_t* lpgate_init( uint8_t hpf, uint8_t filter );
-int lpgate_deinit( lpgate_t* self );
+void lpgate_deinit( lpgate_t* self );
 
 void lpgate_hpf_mode( lpgate_t* self, uint8_t hpf );
 void lpgate_filter_mode( lpgate_t* self, uint8_t filter );

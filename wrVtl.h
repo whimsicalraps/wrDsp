@@ -19,7 +19,7 @@ typedef struct{
 
 // variable speed & ∆rise/fall relationship
 vtl_t* vtl_init( void );
-int vtl_deinit( vtl_t* self );
+void vtl_deinit( vtl_t* self );
 void vtl_mode( vtl_t*     self
              , vtl_mode_t mode
              );

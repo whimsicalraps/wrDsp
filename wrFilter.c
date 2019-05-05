@@ -19,7 +19,7 @@ filter_lp1_t* lp1_init(void){
     return self;
 }
 void lp1_deinit( filter_lp1_t* f ){
-    free(f);
+    free(f); f = NULL;
 }
 
 void lp1_set_dest(filter_lp1_t* f, float in)
@@ -183,7 +183,7 @@ filter_sr_t* switch_ramp_init( void )
     return self;
 }
 void switch_ramp_deinit( filter_sr_t* f ){
-    free(f);
+    free(f); f = NULL;
 }
 
 void switch_ramp_set_rate( filter_sr_t* f, float rate )
@@ -308,7 +308,7 @@ filter_dc_t* dc_init( void ){
     return self;
 }
 void dc_deinit( filter_dc_t* self ){
-    free(self);
+    free(self); self = NULL;
 }
 
 void dc_time( filter_dc_t* self, float hpc ){

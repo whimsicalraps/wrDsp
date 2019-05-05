@@ -18,9 +18,8 @@ vtl_t* vtl_init( void ){
     return self;
 }
 
-int vtl_deinit( vtl_t* self ){
-    free( self );
-    return 0;
+void vtl_deinit( vtl_t* self ){
+    free(self); self = NULL;
 }
 
 void vtl_mode( vtl_t*     self
