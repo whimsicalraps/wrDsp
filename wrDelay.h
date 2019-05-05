@@ -14,6 +14,7 @@ typedef struct{
 delay_t* delay_init( float max_time
                    , float time
                    );
+void   delay_deinit( delay_t* self );
 void   delay_set_ms( delay_t* self, float time );
 void   delay_set_time_percent( delay_t* self, float percent );
 void   delay_set_rate( delay_t* self, float rate );

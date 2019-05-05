@@ -17,12 +17,16 @@ delay_t* delay_init( float max_time
                    , float time
                    ){
     delay_t* self = malloc( sizeof(delay_t) );
-    if(self == NULL){ printf("delay: couldn't malloc\n"); }
+    if( !self ){ printf("delay: couldn't malloc\n"); return NULL; }
 
     self->max_time  = max_time;
     self->max_samps = max_time * MS_TO_SAMPS;
     self->buffer = malloc( sizeof(float) * (int)(self->max_samps + 1) );
-    if( self->buffer == NULL ){ printf("delay: couldn't malloc buf\n"); }
+    if( !self->buffer ){
+        printf("delay: couldn't malloc buf\n");
+        free(self);
+        return NULL;
+    }
 
     for( int i=0; i<(int)(self->max_samps + 1); i++ ){
         self->buffer[i] = 0.0;
@@ -36,6 +40,11 @@ delay_t* delay_init( float max_time
     delay_set_feedback( self, 0.0 );
 
     return self;
+}
+
+void delay_deinit( delay_t* self ){
+    free(self->buffer);
+    free(self);
 }
 
 void delay_set_ms( delay_t* self, float time ){
