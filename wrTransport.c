@@ -1,12 +1,14 @@
 #include "wrTransport.h"
 
 #include <stdlib.h>
+#include <stdio.h> // printf
 #include "wrMath.h"
 
 
-uint8_t transport_init( transport_t* self, uint16_t b_size )
+transport_t* transport_init( uint16_t b_size )
 {
-    uint8_t error = 0;
+    transport_t* self = malloc( sizeof( transport_t ) );
+    if( !self ){ printf("wrTransport malloc failed\n"); return NULL; }
 
     self->active        = 0;
     self->tape_islocked = 0;
@@ -27,8 +29,8 @@ uint8_t transport_init( transport_t* self, uint16_t b_size )
     self->b_size = b_size;
     uint16_t speed_len = (b_size + 1);
     self->speed_v = malloc(sizeof(float) * speed_len );
+    if( !self->speed_v ){ printf("tr_speed_v malloc!\n"); return NULL; }
 
-    if( self->speed_v == NULL ){ error = 1; }
     for( uint16_t i=0; i<speed_len; i++ ){ self->speed_v[i] = 0.0; }
     self->speed_active   = 1.0;
     self->speed_inactive   = 0.0;
@@ -38,13 +40,14 @@ uint8_t transport_init( transport_t* self, uint16_t b_size )
     self->nudge        = 0.0;
     self->nudge_accum  = 0.0;
 
-    return error;
+    return self;
 }
 
 
 void transport_deinit( transport_t* self )
 {
     free(self->speed_v);
+    free(self);
 }
 
 

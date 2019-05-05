@@ -36,7 +36,7 @@ typedef struct{
     std_speeds_t speeds;
 } transport_t;
 
-uint8_t transport_init( transport_t* self, uint16_t b_size );
+transport_t* transport_init( uint16_t b_size );
 void transport_deinit( transport_t* self );
 
 void transport_active( transport_t*     self
