@@ -20,18 +20,18 @@ typedef struct{
 } std_speeds_t;
 
 typedef struct{
-    uint8_t      active;
-    int8_t       tape_islocked;
+    uint8_t       active;
+    int8_t        tape_islocked;
 
-    filter_lp1_t speed_slew; // smoothing for speed changes
-    uint16_t     b_size;     // blocks per processing frame
-    float*       speed_v;    // array of speeds per sample
-    float        speed_active;
-    float        speed_inactive;
+    filter_lp1_t* speed_slew; // smoothing for speed changes
+    uint16_t      b_size;     // blocks per processing frame
+    float*        speed_v;    // array of speeds per sample
+    float         speed_active;
+    float         speed_inactive;
 
-    filter_lp1_t speed_manual; // smoothing for manual changes
-    float        nudge;      // how much are we currently nudging?
-	  float        nudge_accum;
+    filter_lp1_t* speed_manual; // smoothing for manual changes
+    float         nudge;      // how much are we currently nudging?
+    float         nudge_accum;
 
     std_speeds_t speeds;
 } transport_t;
