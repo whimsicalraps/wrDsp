@@ -58,9 +58,9 @@ void  lp1_step_v(    filter_lp1_t* f, float*   in
                                     , float*   out
                                     , uint16_t size
                                     );
-void  lp1_step_c_v(  filter_lp1_t* f, float*   out
-                                    , uint16_t size
-                                    );
+float* lp1_step_c_v(filter_lp1_t* f, float* buffer
+                                   , uint16_t size
+                                   );
 
 // Lowpass: 1-pole assymetrical
 filter_lp1_a_t* lp1_a_init( void );
