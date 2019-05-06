@@ -125,10 +125,15 @@ float peek( delay_t* self, float tap ){
 }
 
 void poke( delay_t* self, float input ){
+    // nb! need the data at the end of the tape
+    int ixERASE  = (int)wrap( self->tap_write + 1, self->max_samps );
+    int ixERASE2 = (int)wrap( self->tap_write + 2, self->max_samps );
     int ixA = (int)self->tap_write;
-    int ixB = (int)wrap( self->tap_write + 1, self->max_samps );
+    int ixB = (int)wrap( self->tap_write - 1, self->max_samps );
     float c = self->tap_write - (float)ixA;
     // these coeffs seem backward to me, but reversed is terrible aliasing?!
-    self->buffer[ixA] = input * c;
-    self->buffer[ixB] = input * (1.0 - c);
+    self->buffer[ixERASE]  = 0.0;
+    self->buffer[ixERASE2] = 0.0;
+    self->buffer[ixA]     += input * c;
+    self->buffer[ixB]     += input * (1.0 - c);
 }
