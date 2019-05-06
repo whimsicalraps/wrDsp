@@ -24,7 +24,6 @@ typedef struct{
     int8_t        tape_islocked;
 
     filter_lp1_t* speed_slew; // smoothing for speed changes
-    float*        speed_v;    // array of speeds per sample
     float         speed_active;
     float         speed_inactive;
 
