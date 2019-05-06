@@ -5,7 +5,7 @@
 #include "wrMath.h"
 
 
-transport_t* transport_init( uint16_t b_size )
+transport_t* transport_init( void )
 {
     transport_t* self = malloc( sizeof( transport_t ) );
     if( !self ){ printf("wrTransport malloc failed\n"); return NULL; }
@@ -26,12 +26,6 @@ transport_t* transport_init( uint16_t b_size )
     self->speed_slew = lp1_init();
     lp1_set_coeff( self->speed_slew, (self->speeds).accel_standard );
 
-    self->b_size = b_size;
-    uint16_t speed_len = (b_size + 1);
-    self->speed_v = malloc(sizeof(float) * speed_len );
-    if( !self->speed_v ){ printf("tr_speed_v malloc!\n"); return NULL; }
-
-    for( uint16_t i=0; i<speed_len; i++ ){ self->speed_v[i] = 0.0; }
     self->speed_active   = 1.0;
     self->speed_inactive   = 0.0;
 
@@ -47,7 +41,6 @@ transport_t* transport_init( uint16_t b_size )
 void transport_deinit( transport_t* self )
 {
     lp1_deinit( self->speed_manual );
-    free(self->speed_v); self->speed_v = NULL;
     lp1_deinit( self->speed_slew );
     free(self); self = NULL;
 }
@@ -142,7 +135,10 @@ float transport_get_speed( transport_t* self )
 }
 
 
-float* transport_speed_block( transport_t* self )
+float* transport_speed_block( transport_t* self
+                            , float*       buffer
+                            , int          b_size
+                            )
 {
     lp1_set_dest( self->speed_slew
                 , transport_get_speed( self )
@@ -190,11 +186,10 @@ float* transport_speed_block( transport_t* self )
                  ) );
 
     // slew toward new speed
-    lp1_step_c_v( self->speed_slew
-                , self->speed_v
-                , self->b_size );
-
-    return self->speed_v;
+    return lp1_step_c_v( self->speed_slew
+                       , buffer
+                       , b_size
+                       );
 }
 
 

@@ -24,8 +24,6 @@ typedef struct{
     int8_t        tape_islocked;
 
     filter_lp1_t* speed_slew; // smoothing for speed changes
-    uint16_t      b_size;     // blocks per processing frame
-    float*        speed_v;    // array of speeds per sample
     float         speed_active;
     float         speed_inactive;
 
@@ -36,11 +34,11 @@ typedef struct{
     std_speeds_t speeds;
 } transport_t;
 
-transport_t* transport_init( uint16_t b_size );
+transport_t* transport_init( void );
 void transport_deinit( transport_t* self );
 
 void transport_active( transport_t*     self
-              , uint8_t          active
+              , uint8_t                 active
               , transport_motor_speed_t slew
               );
 void transport_speed_active( transport_t* self, float speed );
@@ -50,6 +48,9 @@ void transport_nudge( transport_t* self, float delta );
 uint8_t transport_is_active( transport_t* self );
 float transport_get_speed( transport_t* self );
 
-float* transport_speed_block( transport_t* self );
+float* transport_speed_block( transport_t* self
+                            , float* buffer
+                            , int b_size
+                            );
 
 uint8_t transport_is_tape_moving( transport_t* self );
