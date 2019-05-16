@@ -14,14 +14,16 @@ transport_t* transport_init( void )
     self->tape_islocked = 0;
 
     // default speed values
-    self->speeds = (std_speeds_t) {
-        .max_speed = 2.0
-        , .accel_standard = 0.001
-        , .accel_quick = 0.05
-        , .accel_seek = 0.001
-        , .accel_nudge = 0.005
-        , .nudge_release = 0.002
-    };
+    transport_change_std_speeds( self
+    ,    (std_speeds_t) {
+            .max_speed = 2.0
+          , .accel_standard = 0.001
+          , .accel_quick = 0.05
+          , .accel_seek = 0.001
+          , .accel_nudge = 0.005
+          , .nudge_release = 0.002
+        }
+    );
 
     self->speed_slew = lp1_init();
     lp1_set_coeff( self->speed_slew, (self->speeds).accel_standard );
@@ -126,6 +128,11 @@ uint8_t transport_is_active( transport_t* self )
     return (self->active);
 }
 
+
+void transport_change_std_speeds( transport_t* self, std_speeds_t speeds )
+{
+  self->speeds = speeds;
+}
 
 float transport_get_speed( transport_t* self )
 {
