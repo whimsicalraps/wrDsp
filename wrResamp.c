@@ -95,21 +95,21 @@ IO_block_t* resamp_codec_to_tape( float*          speed
     float aspd = _Abs(speed[0]);
     if( aspd > 1.0 ){
         _interp_fast( codec->audio
-                    , &(tape->audio[s_origin])
+                    , &(tapeio->audio[s_origin])
                     , s_interp
                     , speed
                     , codec->size
                     );
     } else if( aspd == 1.0 ){
         _interp_normal( codec->audio
-                      , &(tape->audio[s_origin])
+                      , &(tapeio->audio[s_origin])
                       , s_interp
                       , speed
                       , codec->size
                       );
     } else {
         _interp_slow( codec->audio
-                    , &(tape->audio[s_origin])
+                    , &(tapeio->audio[s_origin])
                     , s_interp
                     , speed
                     , codec->size
