@@ -81,13 +81,13 @@ static void interp_slow( float* codec
     }
 }
 
-IO_block_t* resamp_codec_to_tape( float*      speed
-                                , IO_block_t* codec
-                                , IO_block_t* tapeio
-                                , int         s_origin
-                                , float       s_interp
-//                                , int         b_size
-                                ){
+IO_block_t* resamp_to( float*      speed
+                     , IO_block_t* codec
+                     , IO_block_t* tapeio
+                     , int         s_origin
+                     , float       s_interp
+//                     , int         b_size
+                     ){
     float aspd = _Abs(speed[0]);
     if( aspd > 1.0 ){
         interp_fast( codec->audio
@@ -114,19 +114,19 @@ IO_block_t* resamp_codec_to_tape( float*      speed
     return tapeio;
 }
 
-IO_block_t* resamp_tape_to_codec( float*          speed
-                                , IO_block_t*     tapeio
-                                , int             s_origin
-                                , float           s_interp
-                                , IO_block_t*     codec
-                                )
-{
+IO_block_t* resamp_from( float*      speed
+                       , IO_block_t* tapeio
+                       , int         s_origin
+                       , float       s_interp
+                       , IO_block_t* codec
+                       ){
     float*   buf = codec->audio;
     float*   hb  = &(tapeio->audio[s_origin -1]); // wide for lagrange
     float    co  = s_interp;
     for( int i=0; i<(codec->size); i++ ){
         float coeff[4];
         // shifted from the textbook by +1 to co (shift range to 0-1)
+        // Julius Smith III on 3rd order lagrange interpolation
         coeff[0] = -((co    )*(co-1.0)*(co-2.0))/6.0;
         coeff[1] =  ((co+1.0)*(co-1.0)*(co-2.0))/2.0;
         coeff[2] = -((co+1.0)*(co    )*(co-2.0))/2.0;
