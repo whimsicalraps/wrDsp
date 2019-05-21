@@ -15,21 +15,21 @@ transport_t* transport_init( void )
 
     // default speed values
     transport_change_std_speeds( self
-    ,    (std_speeds_t) {
-            .max_speed = 2.0
+        , (std_speeds_t)
+          { .max_speed = 2.0
           , .accel_standard = 0.001
           , .accel_quick = 0.05
           , .accel_seek = 0.001
           , .accel_nudge = 0.005
           , .nudge_release = 0.002
-        }
+          }
     );
 
     self->speed_slew = lp1_init();
     lp1_set_coeff( self->speed_slew, (self->speeds).accel_standard );
 
     self->speed_active   = 1.0;
-    self->speed_inactive   = 0.0;
+    self->speed_inactive = 0.0;
 
     self->speed_manual = lp1_init();
     lp1_set_coeff( self->speed_manual, (self->speeds).accel_seek );
@@ -48,10 +48,10 @@ void transport_deinit( transport_t* self )
 }
 
 
-void transport_active( transport_t*     self
-              , uint8_t          active
-              , transport_motor_speed_t slew
-              )
+void transport_active( transport_t*            self
+                     , uint8_t                 active
+                     , transport_motor_speed_t slew
+                     )
 {
     self->active = !!active;
     lp1_set_coeff( self->speed_manual
@@ -96,18 +96,18 @@ void transport_speed_inactive( transport_t* self, float speed )
         default: break;
     }
     self->speed_inactive = lim_f( speed
-                            , tmin
-                            , tmax
-                            );
+                                , tmin
+                                , tmax
+                                );
 }
 
 
 void transport_speed_active( transport_t* self, float speed )
 {
     self->speed_active = lim_f( speed
-                            , -(self->speeds).max_speed
-                            ,  (self->speeds).max_speed
-                            );
+                              , -self->speeds.max_speed
+                              ,  self->speeds.max_speed
+                              );
 }
 
 
@@ -131,8 +131,9 @@ uint8_t transport_is_active( transport_t* self )
 
 void transport_change_std_speeds( transport_t* self, std_speeds_t speeds )
 {
-  self->speeds = speeds;
+    self->speeds = speeds;
 }
+
 
 float transport_get_speed( transport_t* self )
 {
@@ -160,27 +161,29 @@ float* transport_speed_block( transport_t* self
                                      );
         } else {
             self->nudge_accum = lim_f( self->nudge_accum + self->nudge
-                                     , -(self->speeds).max_speed
-                                     ,  (self->speeds).max_speed
+                                     , -self->speeds.max_speed
+                                     ,  self->speeds.max_speed
                                      );
         }
     } else {
         if( self->nudge_accum >= 0.0 ){
-            self->nudge_accum = lim_f( self->nudge_accum - (self->speeds).nudge_release
+            self->nudge_accum = lim_f( self->nudge_accum
+                                       - self->speeds.nudge_release
                                      , 0.0
-                                     , (self->speeds).max_speed
+                                     , self->speeds.max_speed
                                      );
         } else {
-            self->nudge_accum = lim_f( self->nudge_accum + (self->speeds).nudge_release
-                                     , -(self->speeds).max_speed
+            self->nudge_accum = lim_f( self->nudge_accum
+                                       + self->speeds.nudge_release
+                                     , -self->speeds.max_speed
                                      , 0.0
                                      );
         }
     }
 
     // limit nudged speed to +/-2.0
-    float tmax = (self->speeds).max_speed;
-    float tmin = -(self->speeds).max_speed;
+    float tmax = self->speeds.max_speed;
+    float tmin = -self->speeds.max_speed;
     switch( self->tape_islocked ){
         case -1: tmin = 0.0; break;
         case  1: tmax = 0.0; break;
@@ -203,7 +206,6 @@ float* transport_speed_block( transport_t* self
 uint8_t transport_is_tape_moving( transport_t* self )
 {
     float speed = lp1_get_out( self->speed_slew );
-    if( speed < -nFloor
-        || speed > nFloor ){ return 1; }
-    return 0;
+    return( speed < -nFloor
+         || speed >  nFloor );
 }
