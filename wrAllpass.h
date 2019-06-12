@@ -13,9 +13,10 @@ typedef struct{
     int    write;
 } allpass_t;
 
-int    allpass_init(     allpass_t* self, float max_time
-                                        , float time
-                                        );
+allpass_t* allpass_init( float max_time
+                       , float time
+                       );
+void allpass_deinit(     allpass_t* self );
 void   allpass_set_ms(   allpass_t* self, float time );
 float  allpass_get_ms(   allpass_t* self );
 void   allpass_set_gain( allpass_t* self, float gain );
