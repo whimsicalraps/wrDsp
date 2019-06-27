@@ -24,10 +24,56 @@ rhead_t* RH_Init( void )
    return self;
 }
 
+
+
 void RH_DeInit( rhead_t* self )
 {
     lp1_deinit( self->monitor );
     lp1_deinit( self->feedback );
     lp1_deinit( self->record );
     free(self);
+}
+
+
+
+void RH_cv_recording( rhead_t* self, uint8_t state )
+{
+   self->cv_recording = state;
+}
+
+
+
+void RH_tr_recording( rhead_t* self, uint8_t state )
+{
+   self->tr_recording = state;
+}
+
+
+
+
+void RH_set_rw( rhead_t* self, tape_mode_t rmode )
+{
+    lp1_set_dest( self->record,   (float)(rmode != READONLY)  );
+    lp1_set_dest( self->feedback, (float)(rmode <= OVERDUB)   );
+    lp1_set_dest( self->monitor,  (float)(rmode != OVERWRITE) );
+}
+
+
+
+
+void RH_set_record_level( rhead_t* self, float level )
+{
+   lp1_set_dest( self->record, level );
+}
+
+
+
+
+void RH_set_record_params( rhead_t* self
+                         , float    feedback
+                         , float    monitor
+                         )
+{
+   lp1_set_dest( self->feedback, feedback );
+   lp1_set_dest( self->monitor,  monitor  );
 }
