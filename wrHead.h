@@ -9,7 +9,7 @@ typedef struct{
     filter_lp1_t* feedback;
     filter_lp1_t* monitor;
 
-    uint8_t       cv_recording;
+    //uint8_t       cv_recording;
     uint8_t       tr_recording;
 } rhead_t;
 
@@ -24,7 +24,6 @@ typedef enum{ READONLY
 rhead_t* RH_Init( void );
 void RH_DeInit( rhead_t* self );
 
-void RH_cv_recording( rhead_t* self, uint8_t state );
 void RH_tr_recording( rhead_t* self, uint8_t state );
 
 void RH_set_rw( rhead_t* self, tape_mode_t rmode );

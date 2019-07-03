@@ -19,7 +19,6 @@ rhead_t* RH_Init( void )
    lp1_set_coeff( self->feedback, HEAD_SLEW_FEEDBACK );
    lp1_set_coeff( self->monitor,  HEAD_SLEW_MONITOR  );
 
-   self->cv_recording = 0;
    self->tr_recording = 0;
    return self;
 }
@@ -32,13 +31,6 @@ void RH_DeInit( rhead_t* self )
     lp1_deinit( self->feedback );
     lp1_deinit( self->record );
     free(self);
-}
-
-
-
-void RH_cv_recording( rhead_t* self, uint8_t state )
-{
-   self->cv_recording = state;
 }
 
 
