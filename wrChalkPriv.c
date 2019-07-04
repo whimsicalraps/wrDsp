@@ -1,3 +1,12 @@
+/*
+  Temporary file to distribute private functions to be included in wrChalk.c and
+  chalk.c during the refactoring process..
+
+  ToDo list:
+  1.) Remove sdfs.h/sdio.h from wrChalk.c (#SD_CARD stuff getting in the way)
+  2.) _C_defrag_list is empty, this should be deleted?
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 

@@ -1,9 +1,3 @@
-/*
-  General Todo List:
-  1.) Remove sdfs.h/sdio.h from wrChalk.c (#SD_CARD stuff getting in the way)
-  2.) _C_defrag_list is empty
-*/
-
 #include <stdint.h>
 
 #define LAST_CHALK_DISTANCE 0x100 // distance to push last-chalk-marker
