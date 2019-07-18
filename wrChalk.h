@@ -2,8 +2,14 @@
 
 #define LAST_CHALK_DISTANCE 0x100 // distance to push last-chalk-marker
 #define CHALK_LIMIT         1365 // max count of chalks per tape (500?)
-#define MIN_CHALK_SPACING   (CUE_MIN_DISTANCE)
+#define MIN_CHALK_SPACING   64
 #define C_SELECTED          ((int16_t)(CHALK_LIMIT - 1))
+
+/*
+	ToDo List:
+	1.) Remove C_goto()?
+	2.) Remove sdfs.h/sdio.h references
+*/
 
 
 typedef int16_t C_ix_t; // this is just an alias. no type safety. just visual
@@ -44,6 +50,11 @@ typedef enum
 	, C_end   = 1
 	} C_names_t;
 
+typedef enum
+    { C_EDIT_ADD
+    , C_EDIT_MOVE
+    } C_EDIT_t;
+
 typedef struct{
 	cnode_t* nodes;
 
@@ -69,11 +80,14 @@ C_t* C_init( void );
 void C_deinit( C_t* self );
 void C_load( C_t* self, uint8_t fresh );
 void C_save_list( C_t* self );
+
 int8_t C_add( C_t* self
             , uint32_t timestamp
             , float    subsamp
             );
 int8_t C_rm( C_t* self, C_ix_t* node ); // for C_here or C_selected
+C_ix_t C_Here( C_t* self );
+void C_goto( C_t* self, C_ix_t dest );
 
 uint8_t C_islooping( C_t* self );
 void C_loop_here( C_t* self );
@@ -81,16 +95,16 @@ void C_loop_here( C_t* self );
 uint32_t C_get_ts( C_t* self, C_ix_t node );
 float C_get_ss( C_t* self, C_ix_t node );
 
-C_ix_t C_Here( C_t* self );
-void C_goto( C_t* self, C_ix_t dest );
-
 void C_loop_active( C_t* self, uint8_t active );
 void C_set_select( C_t*     self
                  , uint32_t timestamp
                  , float    subsamp
                  );
 
-uint8_t C_ts_is_addable( C_t* self, uint32_t timestamp );
-cue_dir_t C_ts_is_here( C_t* self, uint32_t timestamp
-	                             , float    subsamp
-	                             );
+
+void C_find_here( C_t* self, uint32_t ix, float ss );
+int8_t C_collided( C_t* self
+				         , int16_t candidate
+				         , uint32_t timestamp
+				         , C_EDIT_t move
+				         );
