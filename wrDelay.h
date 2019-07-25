@@ -22,7 +22,8 @@ void   delay_set_read_phase( delay_t* self, float percent );
 float  delay_get_ms( delay_t* self );
 void   delay_set_feedback( delay_t* self, float feedback );
 float  delay_get_feedback( delay_t* self );
-float  delay_step( delay_t* self, float in );
+float  delay_step( delay_t* self, float in, float phase );
 float* delay_step_v( delay_t* self, float* buffer
+                                  , float* phase
                                   , int    b_size
                                   );

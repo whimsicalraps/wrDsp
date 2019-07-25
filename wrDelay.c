@@ -1,14 +1,14 @@
 #include "wrDelay.h"
 #include <stdlib.h>
 #include <stdio.h> // printf
-#include "wrMath.h"
+#include "../wrLib/wrMath.h"
 
 #define SAMPLE_RATE 48000 // FIXME how to define this globally
 #define MS_TO_SAMPS (SAMPLE_RATE / 1000.0)
 #define SAMP_AS_MS  (1.0 / MS_TO_SAMPS)
 
 // private declarations
-float wrap( float input, float modulo );
+static inline float wrap( float input, float modulo );
 float peek( delay_t* self, float tap );
 void poke( delay_t* self, float input );
 
@@ -82,7 +82,7 @@ float delay_get_feedback( delay_t* self ){
     return self->feedback;
 }
 
-float delay_step( delay_t* self, float in ){
+float delay_step( delay_t* self, float in, float phase ){
     self->tap_fb = wrap( self->tap_fb + self->rate
                        , self->max_samps
                        );
@@ -92,7 +92,13 @@ float delay_step( delay_t* self, float in ){
     self->tap_write = wrap( self->tap_write + self->rate
                           , self->max_samps
                           );
-    float out = peek( self, self->tap_read );
+    float out = peek( self
+                    , wrap( self->tap_read // FIXME self->tape_write????
+                            - (phase * self->max_time * MS_TO_SAMPS)
+                          , self->max_samps
+                          )
+                    );
+                    //, self->tap_read );
     poke( self, in * ((self->rate >= 1.0) ? 1.0 : self->rate)
                 + self->feedback * peek( self, self->tap_fb )
               );
@@ -100,12 +106,13 @@ float delay_step( delay_t* self, float in ){
 }
 
 float* delay_step_v( delay_t* self, float* buffer
+                                  , float* phase
                                   , int    b_size
                                   ){
     float* in  = buffer;
     float* out = buffer;
     for( int i=0; i<b_size; i++ ){
-        *out++ = delay_step( self, *in++ );
+        *out++ = delay_step( self, *in++, *phase++ );
     }
     return buffer;
 }
