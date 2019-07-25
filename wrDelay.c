@@ -93,12 +93,11 @@ float delay_step( delay_t* self, float in, float phase ){
                           , self->max_samps
                           );
     float out = peek( self
-                    , wrap( self->tap_read // FIXME self->tape_write????
+                    , wrap( self->tap_read
                             - (phase * self->max_time * MS_TO_SAMPS)
                           , self->max_samps
                           )
                     );
-                    //, self->tap_read );
     poke( self, in * ((self->rate >= 1.0) ? 1.0 : self->rate)
                 + self->feedback * peek( self, self->tap_fb )
               );
