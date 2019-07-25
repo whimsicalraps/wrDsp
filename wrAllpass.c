@@ -1,19 +1,28 @@
 #include "wrAllpass.h"
 #include <stdlib.h>
+#include <stdio.h> // printf
 #include "wrMath.h"
 
 #define SAMPLE_RATE 48000 // FIXME how to define this globally
 #define MS_TO_SAMPS (SAMPLE_RATE / 1000.0)
 #define SAMP_AS_MS  (1.0 / MS_TO_SAMPS)
 
-int allpass_init( allpass_t* self, float max_time
-                                 , float time
-                                 )
+allpass_t* allpass_init( float max_time
+                       , float time
+                       )
 {
+    allpass_t* self = malloc( sizeof(allpass_t) );
+    if( !self ){ printf("allpass: couldn't malloc\n"); return NULL; }
+
     self->max_time  = max_time;
     self->max_samps = (int)(max_time * MS_TO_SAMPS);
     self->buffer = malloc( sizeof(float) * (self->max_samps + 1) );
-    if( self->buffer == NULL ){ return 1; }
+    if( self->buffer == NULL ){
+        printf("allpass: couldn't malloc buf\n");
+        free(self);
+        return NULL;
+    }
+
     for( int i=0; i<(self->max_samps); i++ ){
         self->buffer[i] = 0.0;
     }
@@ -21,8 +30,15 @@ int allpass_init( allpass_t* self, float max_time
     allpass_set_gain( self, 0.0 );
     // private
     self->read = 0;
-    return 0;
+
+    return self;
 }
+
+void allpass_deinit( allpass_t* self ){
+    free(self->buffer); self->buffer = NULL;
+    free(self); self = NULL;
+}
+
 
 void allpass_set_ms( allpass_t* self, float time )
 {

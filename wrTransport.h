@@ -37,10 +37,13 @@ typedef struct{
 transport_t* transport_init( void );
 void transport_deinit( transport_t* self );
 
-void transport_active( transport_t*     self
-              , uint8_t                 active
-              , transport_motor_speed_t slew
-              );
+void transport_active( transport_t*            self
+                     , uint8_t                 active
+                     , transport_motor_speed_t slew
+                     );
+void transport_change_std_speeds( transport_t* self
+                                , std_speeds_t speeds
+                                );
 void transport_speed_active( transport_t* self, float speed );
 void transport_speed_inactive( transport_t* self, float speed );
 void transport_nudge( transport_t* self, float delta );
