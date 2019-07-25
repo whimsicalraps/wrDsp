@@ -38,11 +38,14 @@ delay_t* delay_init( float max_time
     delay_set_ms( self, time );
     delay_set_read_phase( self, time );
     delay_set_feedback( self, 0.0 );
+    self->fb_filter = lpgate_init( LPGATE_HPF_ON, LPGATE_FILTER );
+    //lp1_set_coeff( self->fb_filter, 0.2 );
 
     return self;
 }
 
 void delay_deinit( delay_t* self ){
+    lpgate_deinit(self->fb_filter);
     free(self->buffer); self->buffer = NULL;
     free(self); self = NULL;
 }
@@ -94,7 +97,10 @@ float delay_step( delay_t* self, float in ){
                           );
     float out = peek( self, self->tap_read );
     poke( self, in * ((self->rate >= 1.0) ? 1.0 : self->rate)
-                + self->feedback * peek( self, self->tap_fb )
+                 + lpgate_step( self->fb_filter
+                              , self->feedback
+                              , peek( self, self->tap_fb )
+                              )
               );
     return out;
 }

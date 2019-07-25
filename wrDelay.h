@@ -1,11 +1,14 @@
 #pragma once
 
+#include "wrLpGate.h"
+
 typedef struct{
     float* buffer;
     float  max_time;
     float  max_samps;
     float  rate;
     float  feedback;
+    lpgate_t* fb_filter;
     float  tap_fb;
     float  tap_read;
     float  tap_write;
