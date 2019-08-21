@@ -1,6 +1,7 @@
 #pragma once
 
 #include "wrLpGate.h"
+#include "wrFilter.h"
 
 typedef struct{
     float* buffer;
@@ -9,8 +10,9 @@ typedef struct{
     float  rate;
     float  feedback;
     lpgate_t* fb_filter;
+    filter_svf_t* svf;
+    filter_dc_t* dcfb;
     float  tap_fb;
-    float  tap_read;
     float  tap_write;
 } delay_t;
 
@@ -21,7 +23,6 @@ void   delay_deinit( delay_t* self );
 void   delay_set_ms( delay_t* self, float time );
 void   delay_set_time_percent( delay_t* self, float percent );
 void   delay_set_rate( delay_t* self, float rate );
-void   delay_set_read_phase( delay_t* self, float percent );
 float  delay_get_ms( delay_t* self );
 void   delay_set_feedback( delay_t* self, float feedback );
 float  delay_get_feedback( delay_t* self );
