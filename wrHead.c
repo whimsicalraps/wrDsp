@@ -1,4 +1,5 @@
 #include "wrHead.h"
+#include "wrMath.h" // iMAX24f, MAX24b, lim_i24_audio
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -60,4 +61,190 @@ void RH_set_record_params( rhead_t* self
 {
    lp1_set_dest( self->feedback, feedback );
    lp1_set_dest( self->monitor,  monitor  );
+}
+
+
+
+
+IO_block_t* RH_rw_process( rhead_t* self
+                         , IO_block_t* headbuf
+                         , int action
+                         , int32_t** access
+                         , int count
+                         , int* dirty
+                         , int dirty_enum_flag
+                         , int sd_block_samples
+                         )
+{
+   uint16_t  i;
+   float*    input_v  = headbuf->audio;
+   float*    return_v = headbuf->audio;
+   int32_t** tape_r   = access;
+
+   if( action == HEAD_Fadeout // if xfading, act on 1st
+    || action == HEAD_Active ){ // if !xfade, act on only head
+       lp1_step_internal( self->record   );
+       lp1_step_internal( self->feedback );
+       lp1_step_internal( self->monitor  );
+   }
+
+   // playback mode if record is staying at 0.0
+   if( lp1_get_dest( self->record ) == 0.0
+    && lp1_get_out(  self->record ) == 0.0 ){
+      if( action == HEAD_Fadeout ){
+         float fade_step = 1.0 / (float)(count - 1);
+         float fade_out  = 1.0;
+         for( i=0; i<(count); i++ ){
+            fade_out -= fade_step;
+            *(sd_block_samples + *tape_r)
+               = **tape_r; // 'write' action is playback
+            // 'read' action
+            *return_v++ = iMAX24f * (float)(**tape_r++ << BIT_HEADROOM)
+                          * lp1_get_out( self->monitor )
+                          * fade_out;
+         }
+      } else if( action == HEAD_Fadein ){
+         float fade_step = 1.0 / (float)(count - 1);
+         float fade_in   = 0.0;
+         for( i=0; i<(count); i++ ){
+            fade_in += fade_step;
+            *(sd_block_samples + *tape_r)
+               = **tape_r; // 'write' action is playback
+            // 'read' action
+            *return_v++ = iMAX24f * (float)(**tape_r++ << BIT_HEADROOM)
+                          * lp1_get_out( self->monitor )
+                          * fade_in;
+         }
+      } else {
+         for( i=0; i<(count); i++ ){
+            *(sd_block_samples + *tape_r)
+               = **tape_r; // 'write' action is playback
+            // 'read' action
+            *return_v++ = iMAX24f * (float)(**tape_r++ << BIT_HEADROOM)
+                          * lp1_get_out( self->monitor );
+         }
+      }
+   } else {
+      if( action == HEAD_Fadeout ){
+         float fade_step = 1.0 / (float)(count - 1);
+         float fade_out = 1.0;
+
+         for( i=0; i<(count); i++ ){
+            fade_out -= fade_step; // fade out
+            // 'write' action
+            if( ( *(sd_block_samples + *tape_r) == INVALID_SAMP ) ){
+               *(sd_block_samples + *tape_r)
+                  = lim_i24_audio( (int32_t)
+                                // INPUT
+                                   ( lp1_get_out( self->record )
+                                     * fade_out
+                                     * (*input_v++) * F_TO_TAPE_SCALE
+                                // SCALE FEEDBACK TOWARD PLAYBACK
+                                   + ( ( lp1_get_out( self->feedback )-1.0)
+                                       * lp1_get_out( self->record )
+                                       + 1.0
+                                // FEEDBACK
+                                     ) * (float)(**tape_r)
+                                   )
+                                 );
+            } else {
+               *(sd_block_samples + *tape_r)
+                  = lim_i24_audio( (int32_t)
+                                // INPUT
+                                   ( lp1_get_out( self->record )
+                                     * fade_out
+                                     * (*input_v++) * F_TO_TAPE_SCALE
+                                   )
+                                // FEEDBACK (already copied)
+                                   + *(sd_block_samples + *tape_r)
+                                 );
+            }
+            // 'read' action
+            *return_v++ = iMAX24f * (float)(**tape_r++ << BIT_HEADROOM)
+                          * lp1_get_out( self->monitor )
+                        // fade_in starts to affect as self->record fades out
+                          * (1.0 + (fade_out-1.0)*(1.0-lp1_get_out( self->record )));
+         }
+      }
+
+      else if( action == HEAD_Fadein ){
+         float fade_step = 1.0 / (float)(count - 1);
+         float fade_in = 0.0;
+
+         for( i=0; i<(count); i++ ){
+            fade_in += fade_step; // linear ramp, start step above zero
+            // 'write' action
+            if( ( *(sd_block_samples + *tape_r) == INVALID_SAMP ) ){
+               *(sd_block_samples + *tape_r)
+                  = lim_i24_audio( (int32_t)
+                                // INPUT * FADEIN
+                                   ( lp1_get_out( self->record )
+                                     * fade_in
+                                     * (*input_v++) * F_TO_TAPE_SCALE
+                                // SCALED FEEDBACK TOWARD PLAYBACK
+                                   + ( ( lp1_get_out( self->feedback )-1.0)
+                                       * lp1_get_out( self->record )
+                                       + 1.0
+                                     )
+                                // FEEDBACK (already copied)
+                                     * (float)(**tape_r)
+                                   )
+                                 );
+            } else {
+               *(sd_block_samples + *tape_r)
+                  = lim_i24_audio( (int32_t)
+                                   ( lp1_get_out( self->record )
+                                     * fade_in
+                                     * (*input_v++) * F_TO_TAPE_SCALE
+                                   )
+                                 + *(sd_block_samples + *tape_r)
+                                 );
+            }
+            // 'read' action
+            *return_v++ = iMAX24f * (float)(**tape_r++ << BIT_HEADROOM)
+                          * lp1_get_out( self->monitor )
+                        // fade_in starts to affect as self->record fades out
+                          * (1.0 + (fade_in-1.0)*(1.0-lp1_get_out( self->record )));
+         }
+      }
+
+      else if( action == HEAD_Active ){
+         for( i=0; i<(count); i++ ){
+            // 'write' action
+            if( ( *(sd_block_samples + *tape_r) == INVALID_SAMP ) ){
+               *(sd_block_samples + *tape_r)
+                  = lim_i24_audio( (int32_t)
+                                // INPUT
+                                   ( lp1_get_out( self->record )
+                                     * (*input_v++) * F_TO_TAPE_SCALE
+                                // SCALE FEEDBACK TOWARD PLAYBACK
+                                   + ( ( lp1_get_out( self->feedback )-1.0)
+                                       * lp1_get_out( self->record )
+                                       + 1.0
+                                     )
+                                // FEEDBACK
+                                     * (float)(**tape_r)
+                                   )
+                                 );
+            } else {
+               *(sd_block_samples + *tape_r)
+                  = lim_i24_audio( (int32_t)
+                                // INPUT
+                                   ( lp1_get_out( self->record )
+                                     * (*input_v++) * F_TO_TAPE_SCALE
+                                   )
+                                // FEEDBACK (already copied)
+                                 + *(sd_block_samples + *tape_r)
+                                 );
+            }
+            // 'read' action
+            *return_v++ = iMAX24f * (float)(**tape_r++ << BIT_HEADROOM)
+                          * lp1_get_out( self->monitor );
+         }
+      } // else {} inactive. won't happen
+
+      // MARK DIRTY FLAG
+      *(dirty) = dirty_enum_flag;
+   }
+   return headbuf;
 }
