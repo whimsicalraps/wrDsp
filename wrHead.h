@@ -1,3 +1,5 @@
+#pragma once
+
 #include "wrFilter.h" // filter_lp
 #include "wrResamp.h"
 
