@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "wrConvert.h" // _s12_to_sf() _sf_to_s12()
+
 rhead_t* RH_Init( void )
 {
    rhead_t* self = malloc( sizeof( rhead_t ) );
@@ -68,12 +70,11 @@ void RH_set_record_params( rhead_t* self
 
 IO_block_t* RH_rw_process( rhead_t* self
                          , IO_block_t* headbuf
-                         , int action
+                         , HEAD_Action_t action
                          , int32_t** access
                          , int count
                          , int* dirty
-                         , int dirty_enum_flag
-                         , int sd_block_samples
+                         , int write_offset
                          )
 {
    uint16_t  i;
@@ -96,7 +97,7 @@ IO_block_t* RH_rw_process( rhead_t* self
          float fade_out  = 1.0;
          for( i=0; i<(count); i++ ){
             fade_out -= fade_step;
-            *(sd_block_samples + *tape_r)
+            *(write_offset + *tape_r)
                = **tape_r; // 'write' action is playback
             // 'read' action
             *return_v++ = iMAX24f * (float)(**tape_r++ << BIT_HEADROOM)
@@ -108,7 +109,7 @@ IO_block_t* RH_rw_process( rhead_t* self
          float fade_in   = 0.0;
          for( i=0; i<(count); i++ ){
             fade_in += fade_step;
-            *(sd_block_samples + *tape_r)
+            *(write_offset + *tape_r)
                = **tape_r; // 'write' action is playback
             // 'read' action
             *return_v++ = iMAX24f * (float)(**tape_r++ << BIT_HEADROOM)
@@ -117,7 +118,7 @@ IO_block_t* RH_rw_process( rhead_t* self
          }
       } else {
          for( i=0; i<(count); i++ ){
-            *(sd_block_samples + *tape_r)
+            *(write_offset + *tape_r)
                = **tape_r; // 'write' action is playback
             // 'read' action
             *return_v++ = iMAX24f * (float)(**tape_r++ << BIT_HEADROOM)
@@ -132,8 +133,8 @@ IO_block_t* RH_rw_process( rhead_t* self
          for( i=0; i<(count); i++ ){
             fade_out -= fade_step; // fade out
             // 'write' action
-            if( ( *(sd_block_samples + *tape_r) == INVALID_SAMP ) ){
-               *(sd_block_samples + *tape_r)
+            if( ( *(write_offset + *tape_r) == INVALID_SAMP ) ){
+               *(write_offset + *tape_r)
                   = lim_i24_audio( (int32_t)
                                 // INPUT
                                    ( lp1_get_out( self->record )
@@ -148,7 +149,7 @@ IO_block_t* RH_rw_process( rhead_t* self
                                    )
                                  );
             } else {
-               *(sd_block_samples + *tape_r)
+               *(write_offset + *tape_r)
                   = lim_i24_audio( (int32_t)
                                 // INPUT
                                    ( lp1_get_out( self->record )
@@ -156,7 +157,7 @@ IO_block_t* RH_rw_process( rhead_t* self
                                      * (*input_v++) * F_TO_TAPE_SCALE
                                    )
                                 // FEEDBACK (already copied)
-                                   + *(sd_block_samples + *tape_r)
+                                   + *(write_offset + *tape_r)
                                  );
             }
             // 'read' action
@@ -174,8 +175,8 @@ IO_block_t* RH_rw_process( rhead_t* self
          for( i=0; i<(count); i++ ){
             fade_in += fade_step; // linear ramp, start step above zero
             // 'write' action
-            if( ( *(sd_block_samples + *tape_r) == INVALID_SAMP ) ){
-               *(sd_block_samples + *tape_r)
+            if( ( *(write_offset + *tape_r) == INVALID_SAMP ) ){
+               *(write_offset + *tape_r)
                   = lim_i24_audio( (int32_t)
                                 // INPUT * FADEIN
                                    ( lp1_get_out( self->record )
@@ -191,13 +192,13 @@ IO_block_t* RH_rw_process( rhead_t* self
                                    )
                                  );
             } else {
-               *(sd_block_samples + *tape_r)
+               *(write_offset + *tape_r)
                   = lim_i24_audio( (int32_t)
                                    ( lp1_get_out( self->record )
                                      * fade_in
                                      * (*input_v++) * F_TO_TAPE_SCALE
                                    )
-                                 + *(sd_block_samples + *tape_r)
+                                 + *(write_offset + *tape_r)
                                  );
             }
             // 'read' action
@@ -211,8 +212,8 @@ IO_block_t* RH_rw_process( rhead_t* self
       else if( action == HEAD_Active ){
          for( i=0; i<(count); i++ ){
             // 'write' action
-            if( ( *(sd_block_samples + *tape_r) == INVALID_SAMP ) ){
-               *(sd_block_samples + *tape_r)
+            if( ( *(write_offset + *tape_r) == INVALID_SAMP ) ){
+               *(write_offset + *tape_r)
                   = lim_i24_audio( (int32_t)
                                 // INPUT
                                    ( lp1_get_out( self->record )
@@ -227,14 +228,14 @@ IO_block_t* RH_rw_process( rhead_t* self
                                    )
                                  );
             } else {
-               *(sd_block_samples + *tape_r)
+               *(write_offset + *tape_r)
                   = lim_i24_audio( (int32_t)
                                 // INPUT
                                    ( lp1_get_out( self->record )
                                      * (*input_v++) * F_TO_TAPE_SCALE
                                    )
                                 // FEEDBACK (already copied)
-                                 + *(sd_block_samples + *tape_r)
+                                 + *(write_offset + *tape_r)
                                  );
             }
             // 'read' action
@@ -244,7 +245,33 @@ IO_block_t* RH_rw_process( rhead_t* self
       } // else {} inactive. won't happen
 
       // MARK DIRTY FLAG
-      *(dirty) = dirty_enum_flag;
+      *dirty = 1;
    }
    return headbuf;
+}
+
+
+float RH_rw_process_cv( rhead_t* self
+                      , float    input
+                      , uint8_t  action // HEAD_Action_t
+                      , int16_t* cv_read
+                      , int*     dirty
+                      , int      write_offset
+                      )
+{
+    float rec_level = lp1_get_out( self->record );
+    float fb_level  = lp1_get_out( self->feedback );
+    float mon_level = lp1_get_out( self->monitor );
+
+    float ontape = _s12_to_sf( *cv_read );
+    if( action ){
+        *(cv_read + write_offset) = _sf_to_s12( ontape * fb_level
+                                              + input * rec_level
+                                              );
+        *dirty = 1;
+    }else{
+        mon_level = 1.0;
+    }
+
+    return ontape * mon_level;
 }

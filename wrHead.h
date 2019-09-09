@@ -42,12 +42,18 @@ void RH_set_record_params( rhead_t* self
                          , float    monitor
                          );
 
-IO_block_t* RH_rw_process( rhead_t* self
-                         , IO_block_t* headbuf
-                         , int action
-                         , int32_t** access
-                         , int count
-                         , int* dirty
-                         , int dirty_enum_flag
-                         , int sd_block_samples
+IO_block_t* RH_rw_process( rhead_t*      self
+                         , IO_block_t*   headbuf
+                         , HEAD_Action_t action
+                         , int32_t**     access
+                         , int           count
+                         , int*          dirty
+                         , int           write_offset
                          );
+float RH_rw_process_cv( rhead_t* self
+                      , float    input
+                      , uint8_t  action // HEAD_Action_t
+                      , int16_t* cv_read
+                      , int*     dirty
+                      , int      write_offset
+                      );
