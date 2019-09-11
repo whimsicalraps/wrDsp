@@ -2,11 +2,13 @@
 
 /*
   TODO:
-  Initialize an array of page_buffer_ts as a buffer_t
+  Initialize page_buffer_ts as buffer_ts
 */
 
 typedef struct{
     int* byte_array;
+    //buffer_state_t
+    //int* metadata
 } buffer_t;
 
 typedef enum{
@@ -69,5 +71,3 @@ typedef enum{ buf_left  = -1
             , buf_stay  =  0
             , buf_right =  1
 } buf_dir_t;
-
-void buffer_init(buffer_t* self);
