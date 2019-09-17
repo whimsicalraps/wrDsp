@@ -5,17 +5,18 @@
   Initialize page_buffer_ts as buffer_ts
 */
 
-typedef struct{
-    int* byte_array;
-    //buffer_state_t
-    //int* metadata
-} buffer_t;
-
 typedef enum{
     full,
     empty,
     write
 } buffer_state_t;
+
+typedef struct{
+    int* byte_array;
+    int** p_access;
+    buffer_state_t state;
+    //int* metadata
+} buffer_t;
 
 // RAM buffer layout -> should be made more programatic
 // SD_Init() should return SD_QUEUE_LENGTH and pass to R_Init() which builds the list
@@ -71,3 +72,7 @@ typedef enum{ buf_left  = -1
             , buf_stay  =  0
             , buf_right =  1
 } buf_dir_t;
+
+
+buffer_t* buffer_init(int* p_byte);
+void buffer_deinit(buffer_t* self);
