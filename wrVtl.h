@@ -8,13 +8,13 @@ typedef enum{ vtl_mode_transient
 } vtl_mode_t;
 
 typedef struct{
-	float      dest;
-	float      level;
-	float      vel;
-	float      rtime;
-	float      ftime;
-	vtl_mode_t mode;
-	uint8_t    state; // RISE ? FALL etc
+    float      dest;
+    float      level;
+    float      vel;
+    float      rtime;
+    float      ftime;
+    vtl_mode_t mode;
+    uint8_t    state; // RISE ? FALL etc
 } vtl_t;
 
 // variable speed & ∆rise/fall relationship

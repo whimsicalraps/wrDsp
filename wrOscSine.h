@@ -13,7 +13,7 @@ typedef struct osc_sine{
 } osc_sine_t;
 
 // initialization
-void osc_sine_init( osc_sine_t* self );
+osc_sine_t* sine_init( void );
 
 // input fns
 void osc_sine_time( osc_sine_t* self, float time );
@@ -29,6 +29,6 @@ void osc_sine_process_v( osc_sine_t* self
 	                   , float*      exp_fm
 	                   , float*      lin_fm
 	                   , float*      out );
-void osc_sine_process_base_v( osc_sine_t* self
-	                        , uint16_t    b_size
-	                        , float*      out );
+float* sine_process_base_v( osc_sine_t* self
+	                      , float*      out
+	                      , uint16_t    b_size );

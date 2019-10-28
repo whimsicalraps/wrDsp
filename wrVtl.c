@@ -160,7 +160,7 @@ float* vtl_step_v( vtl_t* self
 					self->dest = 0.0; // go toward zero
 					slew_fix = self->ftime;
 				} else { // sustain mode, so hold val
-					for( i; i<b_size; i++ ){
+					while( i++ < b_size ){
 						*out2++ = self->dest;
 					}
 					self->level = self->dest; // save last val
@@ -180,7 +180,7 @@ float* vtl_step_v( vtl_t* self
 						slew_fix = self->rtime;
 					}
 				} else { // hit bottom
-					for( i; i<b_size; i++ ){
+					while( i++ < b_size ){
 						*out2++ = self->dest;
 					}
 					self->level = self->dest;
