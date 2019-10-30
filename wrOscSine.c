@@ -1,5 +1,8 @@
 #include "wrOscSine.h"
 
+#include <stdlib.h> // malloc()
+#include <stdio.h> // printf()
+
 #include <math.h>
 #include <wrMath.h>
 
@@ -18,11 +21,14 @@ const float sine_lut[LUT_SIN_SIZE + 1]={
 
 
 // initialization
-void osc_sine_init( osc_sine_t* self )
+osc_sine_t* sine_init( void )
 {
-	self->rate   = 0.02f;
-	self->id     = 0.0f;
-	self->zero_x = 1;
+    osc_sine_t* self = malloc( sizeof(osc_sine_t) );
+    if( !self ){ printf("!osc_sine\n"); return NULL; }
+    self->rate   = 0.02f;
+    self->id     = 0.0f;
+    self->zero_x = 1;
+    return self;
 }
 
 // input fns
@@ -118,41 +124,43 @@ void osc_sine_process_v( osc_sine_t* self
 		*out2++ = *lut + mix * (lut[1] - *lut);
 	}
 }
-void osc_sine_process_base_v( osc_sine_t* self
-	                        , uint16_t    b_size
-	                        , float*      out
-	                        )
+
+float* sine_process_base_v( osc_sine_t* self
+                          , float*      out
+                          , uint16_t    b_size
+                          )
 {
-	float* out2 = out;
+    float* out2 = out;
 
-	float odd;
-	float fbase;
-	uint32_t base;
-	float mix;
-	float* lut;
+    float odd;
+    float fbase;
+    uint32_t base;
+    float mix;
+    float* lut;
 
-	for( uint16_t i=0; i<b_size; i++ ){
-		odd = self->id;
-		self->id += self->rate;
+    for( uint16_t i=0; i<b_size; i++ ){
+        odd = self->id;
+        self->id += self->rate;
 
-		// edge & zero-cross detection
-		if( self->id >= 2.0f ){
-			self->id -= 2.0f;
-			self->zero_x = i+1;
-		} else if( (self->id >= 1.0f) && (odd < 1.0f) ){
-			self->zero_x = -(i+1);
-		} else if( self->id < 0.0f ){
-			self->id += 2.0f;
-			self->zero_x = 1;
-		} else {
-			self->zero_x = 0;
-		}
+        // edge & zero-cross detection
+        if( self->id >= 2.0f ){
+            self->id -= 2.0f;
+            self->zero_x = i+1;
+        } else if( (self->id >= 1.0f) && (odd < 1.0f) ){
+            self->zero_x = -(i+1);
+        } else if( self->id < 0.0f ){
+            self->id += 2.0f;
+            self->zero_x = 1;
+        } else {
+            self->zero_x = 0;
+        }
 
-		// lookup table w/ linear interpolation
-		fbase = (float)LUT_SIN_HALF * self->id;
-		base = (uint32_t)fbase;
-		mix = fbase - (float)base;
-		lut = (float*) &sine_lut[base];
-		*out2++ = *lut + mix * (lut[1] - *lut);
-	}
+        // lookup table w/ linear interpolation
+        fbase = (float)LUT_SIN_HALF * self->id;
+        base = (uint32_t)fbase;
+        mix = fbase - (float)base;
+        lut = (float*) &sine_lut[base];
+        *out2++ = *lut + mix * (lut[1] - *lut);
+    }
+    return out;
 }
