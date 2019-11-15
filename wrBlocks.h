@@ -5,9 +5,9 @@
 
 float* b_cp( float* dest, float src, int size ); // memset
 float* b_cp_v( float* dest, float* src, int size );
+float* b_add( float* io, float add, int size );
 float* b_sub( float* io, float sub, int size );
 float* b_mul( float* io, float mul, int size );
-float* b_accum( float* io, float add, int size ); // += const
 float* b_accum_v( float* dest, float* src, int size ); // += *src
 float* b_accum_vv( float** signals, int count, int size ); // reduce(+=)
 

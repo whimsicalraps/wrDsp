@@ -16,10 +16,18 @@ float* b_cp_v( float* dest, float* src, int size ){
     return dest;
 }
 
+float* b_add( float* io, float add, int size ){
+    float* d = io;
+    for( int i=0; i<size; i++ ){
+        *d++ += add;
+    }
+    return io;
+}
+
 float* b_sub( float* io, float sub, int size ){
     float* d = io;
     for( int i=0; i<size; i++ ){
-        *d = *d - sub;
+        *d = sub - *d;
         d++;
     }
     return io;
@@ -29,14 +37,6 @@ float* b_mul( float* io, float mul, int size ){
     float* d = io;
     for( int i=0; i<size; i++ ){
         *d++ *= mul;
-    }
-    return io;
-}
-
-float* b_accum( float* io, float add, int size ){
-    float* d = io;
-    for( int i=0; i<size; i++ ){
-        *d++ += add;
     }
     return io;
 }
