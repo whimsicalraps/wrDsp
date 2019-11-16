@@ -80,7 +80,8 @@ void function_trig_vari( func_gen_t* self
         // Always to EOR
 		: ( tr = (self->id <= 0.0f) // is falling     OR
 			  || (self->id > (1.0f + cutoff) ) ); // is rising
-	if(state && tr){ // release stage/stopped
+	if( state && tr // is sensitive
+     || self->go == 0 ){ // or channel is already stopped
 		self->id = MIN_POS_FLOAT; // reset
 		self->go = 1;
 	}
