@@ -32,7 +32,7 @@ typedef struct func_gen{
 } func_gen_t;
 
 // Initialization
-void function_init( func_gen_t* self, int8_t loop );
+func_gen_t* function_init( int loop );
 
 // Param functions
 
@@ -65,15 +65,16 @@ void function_sustain( func_gen_t* self, uint8_t sust );
 void function_rate( func_gen_t* self, float rate );
 void function_fm_ix( func_gen_t* self, float ix );
 
+float function_get_rate( func_gen_t* self );
+
 // Audio rate process
 void function_ramp( func_gen_t* self, float skew );
-void function_ramp_v( func_gen_t* self
-				    , uint16_t    b_size
-	                , float       ctrl_rate
-	                , float*      audio_rate
-	                , float*      ramp_up
-	                , float*      ramp_down
-	                );
+float* function_ramp_v( func_gen_t* self
+                      , float       ctrl_rate
+                      , float*      audio_rate
+                      , float*      two_ramps
+                      , int         b_size
+                      );
 void function_ramp_v_global( uint16_t b_size
 	                       , float    ctrl_rate
 	                       , float*   audio_rate
@@ -82,13 +83,11 @@ void function_ramp_v_global( uint16_t b_size
 	                       );
 
 float function_step( func_gen_t* self, float fm_in );
-void function_v( func_gen_t* self
-	           , uint16_t    b_size
-	           , float*      r_up
-	           , float*      r_dn
-	           , float*      fm_in
-	           , float*      out
-	           );
+float* function_v( func_gen_t* self
+                 , float*      ramps
+                 , float*      fm_return
+                 , int         b_size
+                 );
 void function_fmix_v( func_gen_t* self
 	                , uint16_t    b_size
 	                , float*      r_up
