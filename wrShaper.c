@@ -319,6 +319,26 @@ void shaper_apply_v( shaper_t* self, float* input, float* output ){
 
 
 
+float shaper_rev_lookup( shaper_t* self, float state )
+{
+    float target = shaper_apply( self, state, self->b_size -1 );
+    float candidate = -state;
+    int target_sign = (state < 0.0);
+    for( int i=0; i<32; i++ ){ // gradient descent. iteration limit (CPU)
+        float t = shaper_apply( self, candidate, self->b_size -1 );
+        float diff = target - t;
+        if( diff < 0.01 && diff > -0.01 ){ break; } // in range
+        candidate += (state < 0.0)
+                        ?  diff/8.0
+                        : -diff/8.0;
+    }
+    // check sign
+    if( (candidate < 0.0) && target_sign ){ candidate = -candidate; }
+    return candidate;
+}
+
+
+
 
 /*
 inline float curve_lookup(float samp, uint8_t dir, int16_t block){

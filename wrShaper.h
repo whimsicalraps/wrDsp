@@ -30,3 +30,5 @@ float shaper_apply( shaper_t* self
 	              );
 void shaper_apply_v( shaper_t* self, float* input, float* output );
 void shaper_v_p( shaper_t* self, float* inputs, float* outputs );
+
+float shaper_rev_lookup( shaper_t* self, float state );
