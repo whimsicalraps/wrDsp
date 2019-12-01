@@ -17,6 +17,8 @@ buffer_t* buffer_init( int count )
     buffer_t* self = malloc( sizeof( buffer_t ) );
     if( !self ){ printf("buffer_init malloc failed.\n"); return NULL; }
 
+    self->len = 0;
+    self->b   = NULL;
     buffer_new( self, count );
     return self;
 }
