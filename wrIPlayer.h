@@ -1,20 +1,15 @@
 #pragma once
 
 #include "wrBuffer.h"
-#include "wrPeek.h"
-#include "wrPoke.h"
+#include "wrIHead.h"
 
 typedef struct{
     buffer_t*  buf;
-    peek_t* rhead;
-    poke_t* whead;
+    ihead_t* ihead;
 
     bool playing; // transport state
     float speed; // transport speed
     float location; // 'playhead' pointer to buffer
-
-    float rec_level;
-    float pre_level;
 } player_t;
 
 // setup
