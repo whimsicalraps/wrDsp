@@ -1,0 +1,43 @@
+#pragma once
+
+#include "wrBuffer.h"
+#include "wrPeek.h"
+#include "wrPoke.h"
+
+typedef struct{
+    buffer_t*  buf;
+    peek_t* rhead;
+    poke_t* whead;
+
+    bool playing; // transport state
+    float speed; // transport speed
+    float location; // 'playhead' pointer to buffer
+
+    float rec_level;
+    float pre_level;
+} player_t;
+
+// setup
+player_t* player_init( buffer_t* buffer );
+void player_deinit( player_t* self );
+
+// param setters
+player_t* player_load( player_t* self, buffer_t* buffer );
+
+void player_playing( player_t* self, bool is_play );
+void player_speed( player_t* self, float speed );
+void player_recording( player_t* self, bool is_record );
+void player_rec_level( player_t* self, float rec_level );
+void player_pre_level( player_t* self, float pre_level );
+void player_goto( player_t* self, int sample );
+
+// param getters
+bool player_is_playing( player_t* self );
+float player_get_speed( player_t* self );
+bool player_is_recording( player_t* self );
+float player_get_rec_level( player_t* self );
+float player_get_pre_level( player_t* self );
+
+// signals
+float player_step( player_t* self, float in );
+float* player_step_v( player_t* self, float* io, int size );
