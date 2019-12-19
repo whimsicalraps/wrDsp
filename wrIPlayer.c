@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "wrResamp2.h"
-
 #define REC_OFFSET (-8) // write head trails read head
 
 // setup
@@ -49,7 +47,12 @@ void player_playing( player_t* self, bool is_play )
 
 void player_speed( player_t* self, float speed )
 {
+    float old_speed = self->speed;
     self->speed = speed;
+    if( (old_speed >= 0.0 && speed < 0.0)
+     || (old_speed <= 0.0 && speed > 0.0) ){
+        player_goto( self, player_get_goto(self) ); // reset head offset
+    }
 }
 
 void player_recording( player_t* self, bool is_record )
@@ -85,6 +88,11 @@ void player_goto( player_t* self, int sample )
 bool player_is_playing( player_t* self )
 {
     return self->playing;
+}
+
+float player_get_goto( player_t* self )
+{
+    return (float)peek_get_phase( self->rhead );
 }
 
 float player_get_speed( player_t* self )

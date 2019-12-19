@@ -33,6 +33,7 @@ void player_goto( player_t* self, int sample );
 
 // param getters
 bool player_is_playing( player_t* self );
+float player_get_goto( player_t* self );
 float player_get_speed( player_t* self );
 bool player_is_recording( player_t* self );
 float player_get_rec_level( player_t* self );

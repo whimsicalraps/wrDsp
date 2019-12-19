@@ -23,10 +23,13 @@ void peek_deinit( peek_t* self )
 void peek_phase( peek_t* self, buffer_t* buf, int phase )
 {
     self->phase = (float)phase;
-    // FIXME these clamps shouldn't happen here.
-    if( self->phase >= buf->len ){ self->phase -= buf->len; }
-    if( self->phase < 0 ){ self->phase += buf->len; }
 }
+
+int peek_get_phase( peek_t* self )
+{
+    return self->phase;
+}
+
 
 // TODO this should trigger an update in the buffer object
 float peek( peek_t* self, buffer_t* buf, float speed )
@@ -56,6 +59,7 @@ float peek( peek_t* self, buffer_t* buf, float speed )
 }
 
 // TODO update to use a buffer_t
+// FIXME also outdated direct access to buffer data
 float* peek_v( float* io
              , float* buf
              , int    buf_len

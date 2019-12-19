@@ -55,6 +55,23 @@ buffer_t* buffer_load_and_own( buffer_t* self, float* buffer, int length )
     return self;
 }
 
+// this wrapping behaviour could be changed to handle non-looping buffer mgmt
+float buffer_peek( buffer_t* self, int* location )
+{
+    // edges wrap around to form a loop
+    while( *location > self->len ){ *location -= self->len; }
+    while( *location < 0 ){ *location += self->len; }
+    return self->b[*location];
+}
+
+void buffer_poke_mac( buffer_t* self, int* location, float mult, float accum )
+{
+    // edges wrap around to form a loop
+    while( *location > self->len ){ *location -= self->len; }
+    while( *location < 0 ){ *location += self->len; }
+    self->b[*location] = self->b[*location] * mult + accum;
+}
+
 
 ////////////////////////////////
 // private defns

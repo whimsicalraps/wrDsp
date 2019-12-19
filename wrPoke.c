@@ -72,20 +72,11 @@ void poke( poke_t*   self
     if( self->active ){
         for( int i=0; i<nframes; i++ ){
             // TODO apply clip, brickwall, compand to *y
-
-            // TODO communicate through the buffer manager to auto handle updates
-            buf->b[self->write_ix] *= pre_level;
-            buf->b[self->write_ix] += *y++;
+            buffer_poke_mac( buf, &self->write_ix, pre_level, *y++ );
             self->write_ix = self->write_ix + dir;
-            // TODO wrapping shouldn't happen here. looping is handled outside
-            // FIXME only need to check the direction that dir is moving
-            if( self->write_ix >= buf->len ){ self->write_ix -= buf->len; }
-            if( self->write_ix < 0 ){ self->write_ix += buf->len; }
         }
     } else { // record inactive, just update phase (as a block)
         self->write_ix = self->write_ix + (nframes * dir);
-        while( self->write_ix >= buf->len ){ self->write_ix -= buf->len; }
-        while( self->write_ix < 0 ){ self->write_ix += buf->len; }
     }
 }
 
@@ -117,6 +108,7 @@ static int write( poke_t* self, float rate, float input )
     float pushed_buf[4];
     push_input( self, pushed_buf, input );
 
+    rate = (rate < 0.0) ? -rate : rate;
     float phi = 1.0/rate;
     float new_phase = self->out_phase + rate;
     int new_frames = (int)new_phase;

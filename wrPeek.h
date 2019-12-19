@@ -12,6 +12,7 @@ void peek_deinit( peek_t* self );
 
 // params
 void peek_phase( peek_t* self, buffer_t* buf, int phase );
+int peek_get_phase( peek_t* self );
 
 // signal
 float peek( peek_t* self, buffer_t* buf, float phase );
