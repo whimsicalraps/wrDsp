@@ -120,8 +120,8 @@ float ihead_get_pre_level( ihead_t* self ){ return self->pre_level; }
 int ihead_get_location( ihead_t* self ){ return (int)self->rphase; }
 
 bool  ihead_fade_is_recording(  ihead_fade_t* self ){ return self->head[0]->recording; }
-float ihead_fade_get_rec_level( ihead_fade_t* self ){ return self->head[0]->rec_level; }
-float ihead_fade_get_pre_level( ihead_fade_t* self ){ return self->head[0]->pre_level; }
+float ihead_fade_get_rec_level( ihead_fade_t* self ){ return self->fade_rec_level; }
+float ihead_fade_get_pre_level( ihead_fade_t* self ){ return self->fade_pre_level; }
 int   ihead_fade_get_location(  ihead_fade_t* self ){
     return (int)self->head[self->fade_active_head]->rphase;
 }
