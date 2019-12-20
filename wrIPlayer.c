@@ -70,11 +70,15 @@ void player_pre_level( player_t* self, float pre_level )
 void player_goto( player_t* self, int sample )
 {
     if( self->buf ){
-        ihead_fade_jumpto( self->head
-                         , self->buf
-                         , sample
-                         , (self->speed >= 0.0)
-                         );
+        if( buffer_request( self->buf, sample ) ){
+            ihead_fade_jumpto( self->head
+                             , self->buf
+                             , sample
+                             , (self->speed >= 0.0)
+                             );
+        } else {
+            printf("TODO queue a request until it becomes available\n");
+        }
     }
 }
 
