@@ -5,7 +5,7 @@
 
 typedef struct{
     buffer_t*  buf;
-    ihead_t* ihead;
+    ihead_fade_t* head;
 
     bool playing; // transport state
     float speed; // transport speed
