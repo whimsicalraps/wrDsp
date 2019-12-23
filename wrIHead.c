@@ -105,6 +105,7 @@ void ihead_fade_pre_level( ihead_fade_t* self, float level ){
 void ihead_fade_jumpto( ihead_fade_t* self, buffer_t* buf, int phase, bool is_forward ){
     self->fade_active_head ^= 1; // flip active head
     ihead_jumpto( self->head[self->fade_active_head], buf, phase, is_forward ); // jump the new head
+    // initiate the xfade
     self->fade_phase = 0.0;
     float count = self->fade_length * 48000.0; // FIXME assume 48kHz samplerate
     self->fade_countdown = (int)count;
@@ -143,7 +144,7 @@ void ihead_poke( ihead_t*  self
     if( self->recording ){
         for( int i=0; i<nframes; i++ ){
             // TODO apply clip, brickwall, compand to *y
-            buffer_poke_mac( buf, &self->write_ix, self->pre_level, *y++ );
+            buffer_poke_mac( buf, self->write_ix, self->pre_level, *y++ );
             self->write_ix = self->write_ix + dir;
         }
     } else { // record inactive, just update phase (as a block)
@@ -181,7 +182,16 @@ void ihead_fade_poke( ihead_fade_t*  self
 
 }
 
-float ihead_peek( ihead_t* self, buffer_t* buf, float speed )
+float ihead_fade_update_phase( ihead_fade_t* self, float speed )
+{
+    self->head[ self->fade_active_head ]->rphase += speed;
+    if( self->fade_countdown > 0 ){ // 'inactive' head is still running
+        self->head[!self->fade_active_head ]->rphase += speed;
+    }
+    return self->head[ self->fade_active_head ]->rphase;
+}
+
+float ihead_peek( ihead_t* self, buffer_t* buf )
 {
     // find sample indices
     int p0  = (int)self->rphase;
@@ -193,30 +203,26 @@ float ihead_peek( ihead_t* self, buffer_t* buf, float speed )
     float coeff = self->rphase - (float)p0;
 
     // interpolate array to find value
-    float samps[4] = { buffer_peek( buf, &pn1 )
-                     , buffer_peek( buf, &p0 )
-                     , buffer_peek( buf, &p1 )
-                     , buffer_peek( buf, &p2 )
+    float samps[4] = { buffer_peek( buf, pn1 )
+                     , buffer_peek( buf, p0 )
+                     , buffer_peek( buf, p1 )
+                     , buffer_peek( buf, p2 )
                      };
-    float out = interp_hermite_4pt( coeff, &samps[1] );
-
-    // uses wrapped integer value and reconstruct with coeff, then move forward speed
-    // this means the phase could be out of bounds, but will be corrected next samp
-    self->rphase = (float)p0 + coeff + speed;
-
-    return out;
+    return interp_hermite_4pt( coeff, &samps[1] );
 }
 
-float ihead_fade_peek( ihead_fade_t* self, buffer_t* buf, float speed )
+float ihead_fade_peek( ihead_fade_t* self, buffer_t* buf )
 {
+    float o;
     if( self->fade_countdown > 0 ){ // only poke decrements
-        float out = ihead_peek( self->head[ !self->fade_active_head ], buf, speed );
-        float in  = ihead_peek( self->head[  self->fade_active_head ], buf, speed );
-        self->fade_phase += self->fade_increment;
-        return out + self->fade_phase * (in - out );
+        float out = ihead_peek( self->head[ !self->fade_active_head ], buf );
+        float in  = ihead_peek( self->head[  self->fade_active_head ], buf );
+        self->fade_phase += self->fade_increment; // move through xfade
+        o = out + self->fade_phase * (in - out ); // apply xfade linearly
     } else { // single head
-        return ihead_peek( self->head[ self->fade_active_head ], buf, speed );
+        o = ihead_peek( self->head[ self->fade_active_head ], buf );
     }
+    return o;
 }
 
 

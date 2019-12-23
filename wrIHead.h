@@ -86,5 +86,7 @@ void ihead_fade_poke( ihead_fade_t*  self
                     , float          input
                     );
 // READ HEAD
-float ihead_peek( ihead_t* self, buffer_t* buf, float phase );
-float ihead_fade_peek( ihead_fade_t* self, buffer_t* buf, float speed );
+float ihead_peek( ihead_t* self, buffer_t* buf );
+float ihead_fade_peek( ihead_fade_t* self, buffer_t* buf );
+
+float ihead_fade_update_phase( ihead_fade_t* self, float speed );

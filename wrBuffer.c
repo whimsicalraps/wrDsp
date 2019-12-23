@@ -61,13 +61,13 @@ buffer_t* buffer_load_and_own( buffer_t* self, float* buffer, int length )
     return self;
 }
 
-float buffer_peek( buffer_t* self, int* location )
+float buffer_peek( buffer_t* self, int location )
 {
     buffer_interface_t* i = (buffer_interface_t*)(self->interface);
     return (*i->peek)( i, location );
 }
 
-void buffer_poke_mac( buffer_t* self, int* location, float mult, float accum )
+void buffer_poke_mac( buffer_t* self, int location, float mult, float accum )
 {
     buffer_interface_t* i = (buffer_interface_t*)(self->interface);
     (*i->poke)( i, location, mult, accum );
