@@ -24,6 +24,8 @@ typedef struct buffer_interface{
     void* userdata;
 } buffer_interface_t;
 
+// TODO use a void* instead of buffer_interface_t* pointing at userdata instead
+// saves dereferencing later on
 typedef float (*buffer_peek_t)( buffer_interface_t* self, int* location );
 typedef void (*buffer_poke_mac_t)( buffer_interface_t* self, int* location, float mult, float accum );
 typedef bool (*buffer_request_t)( buffer_interface_t* self, int location );
