@@ -68,9 +68,9 @@ bool player_goto( player_t* self, int sample )
                              , sample
                              , (self->speed >= 0.0)
                              );
-            return true;
         } else {
             printf("TODO queue a request until it becomes available\n");
+            return true; // queued
         }
     }
     return false;
@@ -185,8 +185,8 @@ float player_step( player_t* self, float in )
                    );
     float new_phase = ihead_fade_update_phase( self->head, motion );
 
-    float jumpto = -1.0;
     if( !self->going ){ // only edge check if there isn't a queued jump
+        float jumpto = -1.0;
         if( self->loop ){ // apply loop brace
             if( new_phase >= self->loop_end ){ jumpto = self->loop_start; }
             else if( new_phase <  self->loop_start ){ jumpto = self->loop_end; }
@@ -195,11 +195,9 @@ float player_step( player_t* self, float in )
             if( new_phase >= (self->tape_end - LEAD_IN) ){ jumpto = LEAD_IN; }
             else if( new_phase < LEAD_IN ){ jumpto = self->tape_end - LEAD_IN; }
         }
-    }
-
-    // if there's a new jump, request it
-    if( jumpto >= 0.0 ){
-        self->going = !player_goto( self, jumpto );
+        if( jumpto >= 0.0 ){ // if there's a new jump, request it
+            self->going = player_goto( self, jumpto ); // true = busy, will callback on completion
+        }
     }
     return out;
 }
