@@ -21,15 +21,13 @@ player_t* player_init( buffer_t* buffer )
     self->head = ihead_fade_init();
     if( !self){ printf("player head failed.\n"); return NULL; }
 
+    self->speed = 0.0;
     player_load( self, buffer );
     player_playing( self, false );
-    player_goto( self, 0 );
     player_rec_level( self, 0.0 );
     player_pre_level( self, 1.0 );
     player_loop(self, true);
-    player_loop_start( self, 0.0 );
-    player_loop_end( self, self->tape_end );
-
+    self->going = false;
     return self;
 }
 
@@ -47,7 +45,8 @@ player_t* player_load( player_t* self, buffer_t* buffer )
 {
     self->buf = buffer;
     if(self->buf){
-        self->tape_end   = buffer->len;
+        self->tape_end = buffer->len;
+        player_goto( self, 0 );
         player_loop_start( self, 0.0 );
         player_loop_end( self, self->tape_end );
     }
