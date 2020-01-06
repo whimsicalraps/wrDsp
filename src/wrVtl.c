@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h> // printf
 
-#include "wrGlobals.h"
-#include "wrMath.h" // math_get_ramps()
+//#include "wrGlobals.h"
+#include "../../wrLib/src/wrMath.h" // math_get_ramps()
 
 vtl_t* vtl_init( void ){
     vtl_t* self = malloc( sizeof( vtl_t ) );

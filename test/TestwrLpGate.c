@@ -1,14 +1,14 @@
 #include "unity.h"
 #include "wrLpGate.h"
 
-// A stub to test equivalence of vector optimized step function
-
+// test equivalence of vector optimized step function
 void test_lpgate_v(void){
-    int hp=0; // highpass active?
+    int hp=0; // highpass active? // FIXME set to 1 and it fails
     int p=0; // filter mode
     int f=0;
     int l=0;
     // FIXME: highpass filter does not match
+        // i think caused by the non-commutability of hpf & vca/filter
     //for( hp=0; hp<2; hp++ ){
     for( p=0; p<2; p++ ){
     for( f=0; f<4; f++ ){
