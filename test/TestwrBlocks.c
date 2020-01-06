@@ -180,9 +180,6 @@ void test_b_reduce_vv(void){
     }
 }
 
-
-
-
 int main(void)
 {
     UNITY_BEGIN();

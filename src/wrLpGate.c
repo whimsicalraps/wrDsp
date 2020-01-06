@@ -94,92 +94,12 @@ float* lpgate_v( lpgate_t* self
 }
 
 // private function definitions
-float* lpgate_v_filt_hpf( lpgate_t* self
-                        , float*    level
-                        , float*    buffer
-                        , int       b_size
-                        ){
-    float  lowpass[b_size];
-    float* lp  = lowpass;
-    float* lp2 = lowpass;
-    float* lvl = level;
-    float* in  = buffer;
 
-    // filter
-    // TODO can set first elem of lowpass to prev_lpf & no need for separate case!
-    *lp++ = (*lvl / (0.1 + *lvl) + LOG_VOL_CONST)
-            * (self->prev_lpf
-                  + *lvl * (*in++ - self->prev_lpf));
-    lvl++;
-
-    for( int i=1; i<b_size; i++ ){
-        *lp++ = (*lvl / (0.1 + *lvl) + LOG_VOL_CONST)
-                    * (*lp2 + *lvl * (*in++ - *lp2));
-        lvl++;
-    }
-
-    // hpf
-    in = lowpass;
-    float* out  = buffer;
-    float* out2 = buffer;
-    float* in2 = lowpass;
-
-    *out++ = *in++ - self->prev_lpf + (HPF_COEFF * self->prev_out);
-    for( int i=1; i<b_size; i++ ){
-    	*out++ = *in++ - *in2++ + (HPF_COEFF * *out2++);
-    }
-
-    self->prev_lpf = *in2;
-    self->prev_out = *out2;
-
-    return buffer;
-}
-
-float* lpgate_v_gate_hpf( lpgate_t* self
-                        , float*    level
-                        , float*    buffer
-                        , int       b_size
-                        ){
-    float  lowpass[b_size];
-    float* lp  = lowpass;
-    float* lp2 = lowpass;
-    float* lvl = level;
-    float* in  = buffer;
-
-    // gate
-    // TODO can set first elem of lowpass to prev_lpf & no need for separate case!
-    *lp++ = *lvl
-             * (self->prev_lpf
-                   + (0.5 + *lvl * 0.5) * (*in++ - self->prev_lpf));
-    lvl++;
-
-    for( int i=1; i<b_size; i++ ){
-        *lp++ = *lvl * (*lp2 + (0.5 + *lvl * 0.5) * (*in++ - *lp2));
-        lvl++;
-    }
-
-    // hpf
-    in = lowpass;
-    float* out  = buffer;
-    float* out2 = buffer;
-    float* in2 = lowpass;
-
-    *out++ = *in++ - self->prev_lpf + (HPF_COEFF * self->prev_out);
-    for( int i=1; i<b_size; i++ ){
-    	*out++ = *in++ - *in2++ + (HPF_COEFF * *out2++);
-    }
-
-    self->prev_lpf = *in2;
-    self->prev_out = *out2;
-
-    return buffer;
-}
-
-float* lpgate_v_filt( lpgate_t* self
-                    , float*    level
-                    , float*    buffer
-                    , int       b_size
-                    ){
+static float* filter_v( lpgate_t* self
+                      , float*    level
+                      , float*    buffer
+                      , int       b_size
+                      ){
     float  lp;
     float* lvl = level;
     float* in  = buffer;
@@ -204,7 +124,7 @@ float* lpgate_v_filt( lpgate_t* self
     return buffer;
 }
 
-float* lpgate_v_gate( lpgate_t* self
+static float* gate_v( lpgate_t* self
                     , float*    level
                     , float*    buffer
                     , int       b_size
@@ -230,4 +150,63 @@ float* lpgate_v_gate( lpgate_t* self
     self->prev_out = lp;
 
     return buffer;
+}
+
+static float* hpf_v( lpgate_t* self
+                   , float*    level
+                   , float*    buffer
+                   , int       b_size
+                   ){
+    float  lowpass[b_size];
+    float* in  = lowpass;
+    float* in2 = lowpass;
+    float* out  = buffer;
+    float* out2 = buffer;
+
+    *out++ = *in++ - self->prev_lpf + (HPF_COEFF * self->prev_out);
+    for( int i=1; i<b_size; i++ ){
+        *out++ = *in++ - *in2++ + (HPF_COEFF * *out2++);
+    }
+
+    self->prev_lpf = *in2;
+    self->prev_out = *out2;
+
+    return buffer;
+}
+
+
+// TODO do we need to handle self->prev_* assignment outside the vectors?
+//      if not, can remove the non-hpf wrappers & call directly
+float* lpgate_v_filt_hpf( lpgate_t* self
+                        , float*    level
+                        , float*    buffer
+                        , int       b_size
+                        ){
+    filter_v( self, level, buffer, b_size );
+    return hpf_v( self, level, buffer, b_size );
+}
+
+float* lpgate_v_gate_hpf( lpgate_t* self
+                        , float*    level
+                        , float*    buffer
+                        , int       b_size
+                        ){
+    gate_v( self, level, buffer, b_size );
+    return hpf_v( self, level, buffer, b_size );
+}
+
+float* lpgate_v_filt( lpgate_t* self
+                    , float*    level
+                    , float*    buffer
+                    , int       b_size
+                    ){
+    filter_v( self, level, buffer, b_size );
+}
+
+float* lpgate_v_gate( lpgate_t* self
+                    , float*    level
+                    , float*    buffer
+                    , int       b_size
+                    ){
+    gate_v( self, level, buffer, b_size );
 }
