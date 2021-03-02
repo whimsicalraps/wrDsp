@@ -10,6 +10,15 @@ typedef struct mix_tanh {
 	float* bus_v;	// mix bus vector
 } mix_tanh_t;
 
+typedef struct{
+	float bus;		// mix bus
+	filter_dc_t* hpf;
+	uint16_t b_size;// block size
+	float* bus_v;	// mix bus vector
+	float  servo;
+	filter_lp1_a_t* lp1;
+} mix_compress_t;
+
 typedef struct mix_peaks {
 	float bus; 		// mix bus
 	uint16_t b_size;// block size
@@ -25,6 +34,11 @@ float mix_tanh_step(mix_tanh_t* mix);
 	// vectorized
 void mix_tanh_add_v(mix_tanh_t* mix, float* input);
 void mix_tanh_v(mix_tanh_t* mix, float* output);
+
+
+int8_t mix_compress_init(mix_compress_t* mix, uint16_t size);
+void mix_compress_add_v(mix_compress_t* mix, float* input);
+void mix_compress_v(mix_compress_t* mix, float* output);
 
 // PEAKS
 int8_t mix_peaks_init(mix_peaks_t* mix, uint16_t size, uint16_t chans);

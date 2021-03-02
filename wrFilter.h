@@ -51,7 +51,7 @@ void  lp1_set_out(   filter_lp1_t* f, float level );
 float lp1_get_out(   filter_lp1_t* f );
 float lp1_step(      filter_lp1_t* f, float in );
 float lp1_step_internal(filter_lp1_t* f);
-void  lp1_set_coeff( filter_lp1_t* f, float c );
+void  lp1_set_coeff( filter_lp1_t* f, float c ); // smaller vals = lower cutoff
 float lp1_get_coeff( filter_lp1_t* f );
 void  lp1_set_freq(  filter_lp1_t* f, float freq );
 void  lp1_step_v(    filter_lp1_t* f, float*   in
@@ -67,7 +67,7 @@ filter_lp1_a_t* lp1_a_init( void );
 void lp1_a_deinit( filter_lp1_a_t* self );
 float lp1_a_step( filter_lp1_a_t* f, float in );
 void lp1_a_set_coeff( filter_lp1_a_t* f, float c_rise
-                                       , float c_fall );
+                                       , float c_fall ); // smaller vals = lower cutoff
 void lp1_a_step_v( filter_lp1_a_t* f, float*   in
                                     , float*   out
                                     , uint16_t size );
