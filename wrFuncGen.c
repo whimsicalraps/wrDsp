@@ -270,6 +270,115 @@ float function_step( func_gen_t* self, float fm_in )
 	// use function_lookup(self->id) to convert
 }
 
+float function_un_fmix_v( func_gen_t* self, float r_up, float r_down, float fm_in, float fm_ix )
+{
+	self->zc = 0;
+	if( self->go ){
+		float move;
+
+		// determine rate based on direction
+		if( self->id >= 0 ){
+			move = self->rate * r_up + (fm_in * (self->fm_ix + 0.1* fm_ix)); // (+ phase mod)
+		} else {
+			move = self->rate * r_down + (fm_in * self->fm_ix);
+		}
+		// increment w/ overflow protection
+		while( move != 0.0f ){
+			if( self->id >= 0.0f ){ // are we above zero BEFORE moving
+				self->id += move;
+				move = 0.0f;
+				if( self->id >= 1.0f ){
+					move = (self->id - 1.0f) * r_down / r_up;
+					self->id = -1.0f;
+				} else if( self->id < 0.0f ){
+                    self->zc = 1;
+					if( self->loop != 0 ){
+						move = self->id * r_down / r_up;
+						if( self->loop > 0 ) { self->loop += 1; }
+					}
+					self->id = 0.0f;
+				}
+			} else {
+				self->id += move;
+				move = 0.0f;
+				if( self->id >= 0.0f ){
+
+					if( self->loop != 0 ){
+						move = self->id * r_up / r_down;
+						if( self->loop > 0 ) { self->loop -= 1; }
+						self->id = MIN_POS_FLOAT;
+					} else {
+						self->go = 0;
+						self->id = 0.0f;
+					}
+				} else if( self->id < -1.0f ){
+					move = (self->id + 1.0f) * r_up / r_down;
+					self->id = 1.0f;
+				}
+			}
+		}
+	}
+	return self->id;
+	// NB: this is +/-1 sawtooth, with 0 as 'stopped'
+	// use function_lookup(self->id) to convert
+}
+
+
+
+float function_un_v( func_gen_t* self, float r_up, float r_down, float fm_in )
+{
+	self->zc = 0;
+	if( self->go ){
+		float move;
+
+		// determine rate based on direction
+		if( self->id >= 0 ){
+			move = self->rate * r_up + (fm_in * self->fm_ix); // (+ phase mod)
+		} else {
+			move = self->rate * r_down + (fm_in * self->fm_ix);
+		}
+		// increment w/ overflow protection
+		while( move != 0.0f ){
+			if( self->id >= 0.0f ){ // are we above zero BEFORE moving
+				self->id += move;
+				move = 0.0f;
+				if( self->id >= 1.0f ){
+					move = (self->id - 1.0f) * r_down / r_up;
+					self->id = -1.0f;
+				} else if( self->id < 0.0f ){
+                    self->zc = 1;
+					if( self->loop != 0 ){
+						move = self->id * r_down / r_up;
+						if( self->loop > 0 ) { self->loop += 1; }
+					}
+					self->id = 0.0f;
+				}
+			} else {
+				self->id += move;
+				move = 0.0f;
+				if( self->id >= 0.0f ){
+                    
+					if( self->loop != 0 ){
+						move = self->id * r_up / r_down;
+						if( self->loop > 0 ) { self->loop -= 1; }
+						self->id = MIN_POS_FLOAT;
+					} else {
+						self->go = 0;
+						self->id = 0.0f;
+					}
+				} else if( self->id < -1.0f ){
+					move = (self->id + 1.0f) * r_up / r_down;
+					self->id = 1.0f;
+				}
+			}
+		}
+	}
+	return self->id;
+	// NB: this is +/-1 sawtooth, with 0 as 'stopped'
+	// use function_lookup(self->id) to convert
+}
+
+
 // compiler inlines this anyway
 float sign( float n )
 {
@@ -328,8 +437,7 @@ void function_v( func_gen_t* self
 						}
 						self->id = 0.0f;
 					}
-				} else { // release
-					self->id += move;
+				} else { // release self->id += move;
 					move = 0.0f;
 					if( self->id >= 0.0f ){ // rel -> ?atk
 						self->zc = 1;

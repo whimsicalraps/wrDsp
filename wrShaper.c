@@ -170,16 +170,23 @@ float shaper_apply_old( shaper_t* self
 }
 
 // lookup functions
-float _xfade( float a, float b, float c )
+static float _xfade( float a, float b, float c )
 {
+    // HOTFUNCTION
+    // called every sample for every channel!
+    // can i use a fmac hardware instruction?
+    // TODO test if it makes a real performance difference
+    // alternate. can we use integer math to speed this up?
+    // might need to refactor the oscillators to integer counters too
+    // would be a big change, so only consider if we're running out of cycles in synth
     return (a + c*(b-a));
 }
-float _squ( float in )
+static float _squ( float in )
 {
     float sq = 2.5 - (in * 1.5);
     return (sq*sq);
 }
-float _log( float in )
+static float _log( float in )
 {
     float    fix = in * lut_sin_half_f;
     uint32_t ix  = (uint32_t)fix;
@@ -189,7 +196,7 @@ float _log( float in )
                  , (fix - (float)ix)
                  );
 }
-float _exp( float in )
+static float _exp( float in )
 {
     // just a backwards log lookup
 	float    fix = (1 - in) * lut_sin_half_f;
@@ -200,11 +207,11 @@ float _exp( float in )
                  , (fix - (float)ix)
                  );
 }
-float _tri( float in )
+static float _tri( float in )
 {
     return (2.0 * in - 1.0);
 }
-float _sin( float in )
+static float _sin( float in )
 {
 	float    fix = (1.0 - in) * lut_sin_half_f;
 	uint32_t ix  = (uint32_t)fix;
@@ -215,63 +222,241 @@ float _sin( float in )
                  );
 }
 
+// wavefolder shaper
+#include <math.h>
+// coeff (0 .. 2)
+static float fold( float in, float coeff )
+{
+    // bipolar fold with offset symmetry to fold 2:1 top/bottom
+    //
+    // only folding on the top of the wave (symmetry matched to folds)
+    // simplifies calculation & makes trigger impulses make more sense
+    // TODO can do a symmetric fold by leaving sine bipolar & doubling windows
+    in = _sin(in); // sin then back convert +/-1 to (0..1)
+    float gain = 2.5 * coeff;
+    in *= gain + 1.0; // 1-6x gain
+    //in += coeff * 0.5;
+    in += gain * 0.5; // TODO fine tune this value to acheive ideal sound
+    int window = (int)floorf(in);
+    switch(window){
+        case -7: // fallthrough
+        case -6:
+            in = -6.0 - in;
+            break;
+        case -5: // fallthrough
+        case -4: // 3.5 -> 0.5
+            in = in + 4.0;
+            break;
+        case -3: // fallthrough
+        case -2:
+            in = -2.0 - in;
+            break;
+        case -1: // fallthrough
+        case 0:
+            // do nothing
+            break;
+        case 1:
+        case 2:
+            in = 2.0 - in;
+            break;
+        case 3: // fallthrough
+        case 4:
+            in = in - 4.0;
+            break;
+        case 5: // fallthrough
+        case 6:
+            in = 6.0 - in;
+            break;
+        case 7: // fallthrough
+        case 8:
+            in = in - 8.0;
+            break;
+        default:
+            in = 0.0; // clamp at top past the limit
+            break;
+    }
+    return in;
+}
+
+static float fold_bipolar( float in, float coeff )
+{
+    // only folding on the top of the wave (symmetry matched to folds)
+    // simplifies calculation & makes trigger impulses make more sense
+    // TODO can do a symmetric fold by leaving sine bipolar & doubling windows
+    in = _sin(in); // sin then back convert +/-1 to (0..1)
+    in *= 2.5 * coeff + 1.0; // 1-6x gain
+    int window = (int)floorf(in);
+    switch(window){
+        case -7: // fallthrough
+        case -6:
+            in = -6.0 - in;
+            break;
+        case -5: // fallthrough
+        case -4: // 3.5 -> 0.5
+            in = in + 4.0;
+            break;
+        case -3: // fallthrough
+        case -2:
+            in = -2.0 - in;
+            break;
+        case -1: // fallthrough
+        case 0:
+            // do nothing
+            break;
+        case 1:
+        case 2:
+            in = 2.0 - in;
+            break;
+        case 3: // fallthrough
+        case 4:
+            in = in - 4.0;
+            break;
+        case 5: // fallthrough
+        case 6:
+            in = 6.0 - in;
+            break;
+        default:
+            in = 0.0; // clamp at top past the limit
+            break;
+    }
+    return in;
+}
+// unipolar
+static float fold_unipolar( float in, float coeff )
+{
+    // only folding on the top of the wave (symmetry matched to folds)
+    // simplifies calculation & makes trigger impulses make more sense
+    // TODO can do a symmetric fold by leaving sine bipolar & doubling windows
+    in = _sin(in) * 0.5 + 0.5; // sin then back convert +/-1 to (0..1)
+    in *= 2.5 * coeff + 1.0; // 1-6x gain
+    int window = (int)in;
+    switch((int)in){
+        case 0:
+            // do nothing
+            break;
+        case 1:
+            in = 2.0 - in;
+            break;
+        case 2:
+            in = in - 2.0;
+            break;
+        case 3:
+            in = 4.0 - in;
+            break;
+        case 4:
+            in = in - 4.0;
+            break;
+        case 5:
+            in = 6.0 - in;
+            break;
+        default:
+            in = 0.0; // clamp at top past the limit
+            break;
+    }
+    // sine shape the folded triangle
+    // gives a pure sine at 1x gain, and sharp folds at the inflection point
+    //return _sin(in);
+    return 2.0 * in - 1.0f;
+}
+
+
+static float fold_further( float in, float coeff )
+{
+    return fold(in, coeff + 1.0);
+}
+
+
 // function pointers
-float _up_sq_lg( float in, float coeff )
+static float _up_sq_lg( float in, float coeff )
 {
 	return lim_f_n1_1( ( _log(in) + 1.0 )
 					     * _squ(coeff)
 					   - 1.0
                      );
 }
-float _dn_sq_lg( float in, float coeff )
+static float _dn_sq_lg( float in, float coeff )
 {
     return lim_f_n1_1( ( _exp(-in) - 1.0 )
 					   * _squ(coeff)
 					   + 1.0
                        );
 }
-float _up_lg_tr( float in, float coeff )
+static float _up_sq_tri( float in, float coeff )
+{
+	return lim_f_n1_1( ( _tri(in) + 1.0 )
+					     * _squ(coeff)
+					   - 1.0
+                     );
+}
+static float _dn_sq_tri( float in, float coeff )
+{
+    return lim_f_n1_1( ( _tri(-in) - 1.0 )
+					   * _squ(coeff)
+					   + 1.0
+                       );
+}
+static float _up_tri_sin( float in, float coeff )
+{
+    return _xfade( _tri(in)
+                 , _sin(in)
+                 , coeff
+                 );
+}
+static float _dn_tri_sin( float in, float coeff )
+{
+    return _xfade( _tri(-in)
+                 , _sin(in)
+                 , coeff
+                 );
+}
+
+
+
+static float _up_lg_tr( float in, float coeff )
 {
     return _xfade( _log(in)
                  , _tri(in)
                  , coeff
                  );
 }
-float _dn_lg_tr( float in, float coeff )
+static float _dn_lg_tr( float in, float coeff )
 {
     return _xfade( _exp(-in)
                  , _tri(-in)
                  , coeff
                  );
 }
-float _up_tr_ex( float in, float coeff )
+static float _up_tr_ex( float in, float coeff )
 {
 	return _xfade( _tri(in)
                  , _exp(in)
                  , coeff
                  );
 }
-float _dn_tr_ex( float in, float coeff )
+static float _dn_tr_ex( float in, float coeff )
 {
     return _xfade( _tri(-in)
                  , _log(-in)
                  , coeff
                  );
 }
-float _up_ex_sn( float in, float coeff )
+static float _up_ex_sn( float in, float coeff )
 {
     return _xfade( _exp(in)
                  , _sin(in)
                  , coeff
                  );
 }
-float _dn_ex_sn( float in, float coeff )
+static float _dn_ex_sn( float in, float coeff )
 {
     return _xfade( _log(-in)
                  , _sin(in)
                  , coeff
                  );
 }
+
+// activate the wavefolder by defining FOLDING constant
+#define FOLDING
 
 float shaper_apply( shaper_t* self
 	              , float     input
@@ -282,6 +467,7 @@ float shaper_apply( shaper_t* self
                           , float coeff
                           );
     static func_t (*sh_fnptr[4][2]) =
+#ifndef FOLDING
     { { _up_sq_lg
       , _dn_sq_lg
       }
@@ -293,11 +479,30 @@ float shaper_apply( shaper_t* self
       }
     , { _up_ex_sn
       , _dn_ex_sn
+#endif
+#ifdef FOLDING
+    { { _up_sq_tri
+      , _dn_sq_tri
+      }
+    , { _up_tri_sin
+      , _dn_tri_sin
+      }
+    , { fold
+      , fold
+      }
+    , { fold_further
+      , fold_further
+#endif
       } };
-      // return input;
-    return sh_fnptr[self->zone[samp]][input <= 0.0]( input
-                                                   , self->coeff[samp]
-                                                   );
+      // bitwise comparison to replace conditional (input <= 0.0])
+      // TODO objectively test for speedup
+    return sh_fnptr[self->zone[samp]]
+                   [!!(*(uint32_t*)&input & 0x80000000)]( input
+                                                    , self->coeff[samp]
+                                                    );
+    //return sh_fnptr[self->zone[samp]][input <= 0.0]( input
+    //                                               , self->coeff[samp]
+    //                                               );
 }
 
 
