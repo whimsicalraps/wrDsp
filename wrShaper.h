@@ -24,6 +24,10 @@ float shaper_apply_old( shaper_t* self
 	              , float     input
 	              , uint16_t  samp
 	              );
+float shaper_apply_fold( shaper_t* self
+	              , float     input
+	              , uint16_t  samp
+	              );
 float shaper_apply( shaper_t* self
 	              , float     input
 	              , uint16_t  samp

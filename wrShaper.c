@@ -455,10 +455,7 @@ static float _dn_ex_sn( float in, float coeff )
                  );
 }
 
-// activate the wavefolder by defining FOLDING constant
-#define FOLDING
-
-float shaper_apply( shaper_t* self
+float shaper_apply_fold( shaper_t* self
 	              , float     input
 	              , uint16_t  samp
 	              )
@@ -467,20 +464,6 @@ float shaper_apply( shaper_t* self
                           , float coeff
                           );
     static func_t (*sh_fnptr[4][2]) =
-#ifndef FOLDING
-    { { _up_sq_lg
-      , _dn_sq_lg
-      }
-    , { _up_lg_tr
-      , _dn_lg_tr
-      }
-    , { _up_tr_ex
-      , _dn_tr_ex
-      }
-    , { _up_ex_sn
-      , _dn_ex_sn
-#endif
-#ifdef FOLDING
     { { _up_sq_tri
       , _dn_sq_tri
       }
@@ -492,7 +475,36 @@ float shaper_apply( shaper_t* self
       }
     , { fold_further
       , fold_further
-#endif
+      } };
+      // bitwise comparison to replace conditional (input <= 0.0])
+      // TODO objectively test for speedup
+    return sh_fnptr[self->zone[samp]]
+                   [!!(*(uint32_t*)&input & 0x80000000)]( input
+                                                    , self->coeff[samp]
+                                                    );
+}
+
+
+float shaper_apply( shaper_t* self
+	              , float     input
+	              , uint16_t  samp
+	              )
+{
+    typedef float (func_t)( float in
+                          , float coeff
+                          );
+    static func_t (*sh_fnptr[4][2]) =
+    { { _up_sq_lg
+      , _dn_sq_lg
+      }
+    , { _up_lg_tr
+      , _dn_lg_tr
+      }
+    , { _up_tr_ex
+      , _dn_tr_ex
+      }
+    , { _up_ex_sn
+      , _dn_ex_sn
       } };
       // bitwise comparison to replace conditional (input <= 0.0])
       // TODO objectively test for speedup
