@@ -87,28 +87,33 @@ void osc_sine_process_v( osc_sine_t* self
 	float* linfm = lin_fm;
 	float* out2 = out;
 
-	float odd;
+	float prev_id;
 	float fbase;
 	uint32_t base;
 	float mix;
 	float* lut;
 
 	for( uint16_t i=0; i<b_size; i++ ){
-		odd = self->id;
+		prev_id = self->id;
 		self->id += self->rate * (*expfm++) + (*linfm++);
 
+        // disabled as we don't use the ZC detection anywhere & it slows us down
 		// edge & zero-cross detection
-		if( self->id >= 2.0f ){
-			self->id -= 2.0f;
-			self->zero_x = i+1;
-		} else if( (self->id >= 1.0f) && (odd < 1.0f) ){
-			self->zero_x = -(i+1);
-		} else if( self->id < 0.0f ){
-			self->id += 2.0f;
-			self->zero_x = 1;
-		} else {
-			self->zero_x = 0;
-		}
+		// if( self->id >= 2.0f ){
+		// 	self->id -= 2.0f;
+		// 	self->zero_x = i+1;
+		// } else if( (self->id >= 1.0f) && (prev_id < 1.0f) ){
+		// 	self->zero_x = -(i+1);
+		// } else if( self->id < 0.0f ){
+		// 	self->id += 2.0f;
+		// 	self->zero_x = 1;
+		// } else {
+		// 	self->zero_x = 0;
+		// }
+
+        // bounds check
+        while(self->id >= 2.0f){ self->id -= 2.0f; }
+        while(self->id <  0.0f){ self->id += 2.0f; }
 
 		// lookup table w/ linear interpolation
 		fbase = (float)LUT_SIN_HALF * self->id;
