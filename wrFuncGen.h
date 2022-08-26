@@ -83,7 +83,10 @@ void function_ramp_v_global( uint16_t b_size
 
 float function_step( func_gen_t* self, float fm_in );
 float function_un_v( func_gen_t* self, float r_up, float r_down, float fm_in );
+// float function_un_v_ramped( func_gen_t* self, float ramp_k, float ramp_a, float fm_in );
+float function_un_v_ramped( func_gen_t* self, float ramp_composite, float fm_in );
 float function_un_fmix_v( func_gen_t* self, float r_up, float r_down, float fm_in, float fm_ix );
+float function_un_fmix_v_ramped( func_gen_t* self, float ramp_composite, float fm_in, float fm_ix );
 void function_v( func_gen_t* self
 	           , uint16_t    b_size
 	           , float*      r_up

@@ -2,8 +2,6 @@
 #include <wrFuncGen.h>
 #include <wrMath.h>
 
-//#include "../STM32F4-workarea/Project/JF3-test/lib/debug.h"
-
 void function_init( func_gen_t* self, int8_t loop )
 {
 	self->go         = 0; // stopped
@@ -206,6 +204,7 @@ void function_ramp_v( func_gen_t* self
 	float max = 1.0 - f; // (-1,1 range)
 	float min = 0.0 + f; // (-1,1 range)
 	// bandlimiting based on base pitch of function
+
 	for(uint16_t i=0;i<b_size;i++){
 		float t = ctrl_rate + *audio_rate2++;
 		*ramp_up2 = 0.501002
@@ -270,61 +269,6 @@ float function_step( func_gen_t* self, float fm_in )
 	// use function_lookup(self->id) to convert
 }
 
-float function_un_fmix_v( func_gen_t* self, float r_up, float r_down, float fm_in, float fm_ix )
-{
-	self->zc = 0;
-	if( self->go ){
-		float move;
-
-		// determine rate based on direction
-		if( self->id >= 0 ){
-			move = self->rate * r_up + (fm_in * (self->fm_ix + 0.1* fm_ix)); // (+ phase mod)
-		} else {
-			move = self->rate * r_down + (fm_in * self->fm_ix);
-		}
-		// increment w/ overflow protection
-		while( move != 0.0f ){
-			if( self->id >= 0.0f ){ // are we above zero BEFORE moving
-				self->id += move;
-				move = 0.0f;
-				if( self->id >= 1.0f ){
-					move = (self->id - 1.0f) * r_down / r_up;
-					self->id = -1.0f;
-				} else if( self->id < 0.0f ){
-                    self->zc = 1;
-					if( self->loop != 0 ){
-						move = self->id * r_down / r_up;
-						if( self->loop > 0 ) { self->loop += 1; }
-					}
-					self->id = 0.0f;
-				}
-			} else {
-				self->id += move;
-				move = 0.0f;
-				if( self->id >= 0.0f ){
-
-					if( self->loop != 0 ){
-						move = self->id * r_up / r_down;
-						if( self->loop > 0 ) { self->loop -= 1; }
-						self->id = MIN_POS_FLOAT;
-					} else {
-						self->go = 0;
-						self->id = 0.0f;
-					}
-				} else if( self->id < -1.0f ){
-					move = (self->id + 1.0f) * r_up / r_down;
-					self->id = 1.0f;
-				}
-			}
-		}
-	}
-	return self->id;
-	// NB: this is +/-1 sawtooth, with 0 as 'stopped'
-	// use function_lookup(self->id) to convert
-}
-
-
-
 float function_un_v( func_gen_t* self, float r_up, float r_down, float fm_in )
 {
 	self->zc = 0;
@@ -359,6 +303,7 @@ float function_un_v( func_gen_t* self, float r_up, float r_down, float fm_in )
 				if( self->id >= 0.0f ){
                     
 					if( self->loop != 0 ){
+						self->zc = 1;
 						move = self->id * r_up / r_down;
 						if( self->loop > 0 ) { self->loop -= 1; }
 						self->id = MIN_POS_FLOAT;
@@ -368,6 +313,66 @@ float function_un_v( func_gen_t* self, float r_up, float r_down, float fm_in )
 					}
 				} else if( self->id < -1.0f ){
 					move = (self->id + 1.0f) * r_up / r_down;
+					self->id = 1.0f;
+				}
+			}
+		}
+	}
+	return self->id;
+	// NB: this is +/-1 sawtooth, with 0 as 'stopped'
+	// use function_lookup(self->id) to convert
+}
+
+float function_un_v_ramped( func_gen_t* self, float ramp_composite, float fm_in )
+{
+	self->zc = 0;
+	if( self->go ){
+		float move;
+
+	    float rf  = fabsf(self->rate); // allow negative frequencies
+	    float max = 1.0 - rf;
+	    float min = 0.0 + rf;
+	    float coeff = _Lim(ramp_composite, min, max); // bandlimited saw -> triangle
+
+		// determine rate based on direction
+		if( self->id >= 0 ){ // rising
+			// RAMP protection to avoid infinity
+			move = self->rate * (0.501002 / (0.001002 + coeff)) + (fm_in * self->fm_ix);
+		} else { // falling
+			move = self->rate * (0.501002 / (1.001002 - coeff)) + (fm_in * self->fm_ix);
+		}
+		// increment w/ overflow protection
+		while( move != 0.0f ){
+			if( self->id >= 0.0f ){ // are we above zero BEFORE moving
+				self->id += move;
+				move = 0.0f;
+				if( self->id >= 1.0f ){ // rise -> fall
+					move = (self->id - 1.0f) * (coeff / (1.0 - coeff));
+					self->id = -1.0f;
+				} else if( self->id < 0.0f ){ // TZ from rise
+                    self->zc = 1;
+					if( self->loop != 0 ){
+						move = self->id * (coeff / (1.0 - coeff));
+						if( self->loop > 0 ) { self->loop += 1; }
+					}
+					self->id = 0.0f;
+				}
+			} else { // falling stage
+				self->id += move;
+				move = 0.0f;
+				if( self->id >= 0.0f ){ // end of fall
+                    
+					if( self->loop != 0 ){ // cycle
+						self->zc = 1;
+						move = self->id * ((1.0 - coeff) / coeff);
+						if( self->loop > 0 ) { self->loop -= 1; }
+						self->id = MIN_POS_FLOAT;
+					} else { // trigger ends
+						self->go = 0;
+						self->id = 0.0f;
+					}
+				} else if( self->id < -1.0f ){ // TZ back to rise
+					move = (self->id + 1.0f) * ((1.0 - coeff) / coeff);
 					self->id = 1.0f;
 				}
 			}
@@ -558,3 +563,132 @@ void function_fmix_v( func_gen_t* self
 	}
 	return;
 }
+
+
+float function_un_fmix_v( func_gen_t* self, float r_up, float r_down, float fm_in, float fm_ix )
+{
+	self->sustaining = 0;
+	self->zc = 0;
+
+	if( self->go ){
+		float move = ( fm_in               // FM audio source
+		               * ( self->fm_ix         // FM pot
+		                   + 0.1 * fm_ix )  // FM index adds to pot
+		               ) // linear FM
+		             + self->rate              // base freq
+		               * ( (self->id >= 0.0f)  // is rising?
+		                   ? r_up
+		                   : r_down
+		                 );
+		while( move != 0.0f ){
+			if( self->id > 0.0f ){ // attack
+				self->id += move;
+				move = 0.0f;
+				if( self->id >= 1.0f ){
+					if( self->s_mode && self->sustain_state ){
+						self->sustaining = 1;
+						self->id = 1.0f;
+						return self->id;
+					}
+					move = (self->id - 1.0f) * r_down / r_up;
+					self->id = -1.0f;
+				} else if( self->id < 0.0f ){ // rev TZ
+					self->zc = 1;
+					if( self->loop ){
+						move = self->id * r_down / r_up;
+						if( self->loop > 0.0f ) { self->loop++; } // TZ adds to burst!
+					}
+					self->id = 0.0f;
+				}
+			} else { // release
+				self->id += move;
+				move = 0.0f;
+				if( self->id >= 0.0f ){ // rel -> ?atk
+					self->zc = 1;
+					if( self->loop ){
+						move = self->id * r_up / r_down;
+						if( self->loop > 0 ) { self->loop--; }
+						self->id = MIN_POS_FLOAT; // get into attack case
+					} else {
+						self->id = 0.0f; // only for STOP
+						self->go = 0;
+						return self->id;
+					}
+				} else if( self->id < -1.0f ){ // TZ back to attack
+					move = (self->id + 1.0f) * r_up / r_down;
+					self->id = 1.0f;
+				}
+			}
+		}
+	} else {
+		self->id = 0.0f;
+	}
+	return self->id;
+}
+
+float function_un_fmix_v_ramped( func_gen_t* self, float ramp_composite, float fm_in, float fm_ix )
+{
+	self->sustaining = 0;
+	self->zc = 0;
+
+	if( self->go ){
+		float move;
+
+	    float rf  = fabsf(self->rate); // allow negative frequencies
+	    float max = 1.0 - rf;
+	    float min = 0.0 + rf;
+	    float coeff = _Lim(ramp_composite, min, max); // bandlimited saw -> triangle
+
+		// determine rate based on direction
+		if( self->id >= 0 ){
+			move = self->rate * (0.501002 / (0.001002 + coeff)) + (fm_in * (self->fm_ix + 0.1 * fm_ix));
+		} else {
+			move = self->rate * (0.501002 / (1.001002 - coeff)) + (fm_in * (self->fm_ix + 0.1 * fm_ix));
+		}
+
+		while( move != 0.0f ){
+			if( self->id > 0.0f ){ // attack
+				self->id += move;
+				move = 0.0f;
+				if( self->id >= 1.0f ){
+					if( self->s_mode && self->sustain_state ){
+						self->sustaining = 1;
+						self->id = 1.0f;
+						return self->id;
+					}
+					move = (self->id - 1.0f) * (coeff / (1.0 - coeff));
+					self->id = -1.0f;
+				} else if( self->id < 0.0f ){ // rev TZ
+					self->zc = 1;
+					if( self->loop ){
+						move = self->id * (coeff / (1.0 - coeff));
+						if( self->loop > 0.0f ) { self->loop++; } // TZ adds to burst!
+					}
+					self->id = 0.0f;
+				}
+			} else { // release
+				self->id += move;
+				move = 0.0f;
+				if( self->id >= 0.0f ){ // rel -> ?atk
+					self->zc = 1;
+					if( self->loop ){
+						move = self->id * ((1.0 - coeff) / coeff);
+						if( self->loop > 0 ) { self->loop--; }
+						self->id = MIN_POS_FLOAT; // get into attack case
+					} else {
+						self->id = 0.0f; // only for STOP
+						self->go = 0;
+						return self->id;
+					}
+				} else if( self->id < -1.0f ){ // TZ back to attack
+					move = (self->id + 1.0f) * ((1.0 - coeff) / coeff);
+					self->id = 1.0f;
+				}
+			}
+		}
+	} else {
+		self->id = 0.0f;
+	}
+	return self->id;
+}
+
