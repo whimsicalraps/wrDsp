@@ -257,7 +257,7 @@ static float fold( float in, float coeff )
     float offset = (float)((win2 << 1) - 6); // multiply by 2 then subtract 6
 
     // if LSB is 1 we choose to invert
-    return (win2 & 1) ? (offset - in) : (in - offset);
+    return (win2 & 1) ? (in - offset) : (offset - in) ;
 }
 
 static float fold_further( float in, float coeff )
