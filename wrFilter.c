@@ -15,7 +15,7 @@ filter_lp1_t* lp1_init(void){
     if( !self ){ printf("Lp1: malloc failed\n"); return NULL; }
 	self->x = 0;
 	self->y = 0;
-	self->c = 0.97;
+	self->c = 0.97; // how far we step toward the destination (here 97%)
     return self;
 }
 void lp1_deinit( filter_lp1_t* f ){

@@ -149,7 +149,8 @@ void function_sustain( func_gen_t* self, uint8_t sust )
 
 void function_rate( func_gen_t* self, float rate )
 {
-	self->rate = lim_f_n1_1( rate );
+	// self->rate = lim_f_n1_1( rate );
+	self->rate = (rate > 0.5f) ? 0.5f : (rate < -0.5f) ? -0.5f : rate;
 }
 
 void function_fm_ix( func_gen_t* self, float ix )
@@ -339,6 +340,7 @@ float function_un_v_ramped( func_gen_t* self, float ramp_composite, float fm_in 
 	if( self->go ){
 		float move;
 
+		// self->rate is limited [-0.5,+0.5]
 	    float rf  = fabsf(self->rate); // allow negative frequencies
 	    float max = 1.0 - rf;
 	    float min = 0.0 + rf;
