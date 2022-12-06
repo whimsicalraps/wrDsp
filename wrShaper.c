@@ -13,15 +13,15 @@ const float log_lut[LUT_SIN_HALF + 1]={
 int8_t shaper_init( shaper_t* self, uint16_t b_size, uint16_t channels ){
 	int8_t err = 0;
 	self->b_size = b_size;
-	self->chans = channels;
+	self->chans = channels; // UNUSED and should stay that way
 	self->zone = NULL;
 	self->zone = malloc(sizeof(uint8_t)*b_size);
 	if( self->zone == NULL ){ err = 1; }
-	for( uint16_t i=0; i<channels; i++ ){ self->zone[i] = 2; }
+	for( uint16_t i=0; i<b_size; i++ ){ self->zone[i] = 2; }
 	self->coeff = NULL;
 	self->coeff = malloc(sizeof(float)*b_size);
 	if( self->coeff == NULL ){ err = 2; }
-	for(uint16_t i=0; i<channels; i++){ self->coeff[i] = 0.0f; }
+	for(uint16_t i=0; i<b_size; i++){ self->coeff[i] = 0.0f; }
 
 	return err;
 }
@@ -35,18 +35,16 @@ void shaper_prep( shaper_t* self, float control )
 	self->coeff[0] = tmp - (float)self->zone[0];
 }
 
+// NOTE: We create a shared array of zones & coeffs for all channels
 void shaper_prep_v( shaper_t* self, float* audio, float control )
 {
-	uint8_t* zone = self->zone;
-	float* coeff = self->coeff;
-	float tmp;
-	
 	for(uint16_t i=0; i<(self->b_size); i++){
-		tmp = lim_f((control + *audio++) * 4.0f, 0.0f, 3.999999f);
-		*zone = (uint8_t)tmp;
-		*coeff++ = tmp - (float)*zone++;
+        float tmp = lim_f((control + audio[i]) * 4.0f, 0.0f, 3.999999f);
+        self->zone[i] = (uint8_t)tmp;
+        self->coeff[i] = tmp - (float)self->zone[i];
 	}
 }
+
 const float lut_sin_half_f = LUT_SIN_HALF;
 float shaper_apply_old( shaper_t* self
 	              , float     input
@@ -229,7 +227,6 @@ static float fold( float in, float coeff )
     in = _sin(in); // sin then back convert +/-1 to (0..1)
     float gain = 2.5 * coeff;
     in *= gain + 1.0; // 1-6x gain
-    //in += coeff * 0.5;
     in += gain * 0.5; // TODO fine tune this value to acheive ideal sound
 
     // direct switch version for clarity
