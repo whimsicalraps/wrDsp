@@ -65,23 +65,26 @@ void function_trig_sustain( func_gen_t* self
 	}
 	self->sustain_state = state;*/
 }
+
+// variable retrigger sensitivity
+// cutoff: -1 always triggers, 0 only in release, +1 never.
 void function_trig_vari( func_gen_t* self
 	                   , uint8_t     state
 	                   , float       cutoff )
 {
-	// -1 is always, 0 is only in release, +1 is never
-	uint8_t tr;
-	(cutoff >= 0.0f)
-        // EOR to EOC
-		? ( tr = (self->id <= 0.0f) // is falling AND
-			  && (self->id > (cutoff - 1.0f)) ) //
-        // Always to EOR
-		: ( tr = (self->id <= 0.0f) // is falling     OR
-			  || (self->id > (1.0f + cutoff) ) ); // is rising
-	if( state && tr // is sensitive
-     || self->go == 0 ){ // or channel is already stopped
-		self->id = MIN_POS_FLOAT; // reset
-		self->go = 1;
+	if(state){ // state (ie trigger) must be high
+		uint8_t tr = (cutoff >= 0.0f)
+				        // EOR to EOC
+						? ( (self->id <= 0.0f) // func is falling, AND
+						 && (self->id > (cutoff - 1.0f)) ) // id is *after* retrig point
+				        // Always to EOR
+						: ( (self->id <= 0.0f) // is falling     OR
+						 || (self->id > (1.0f + cutoff) ) ); // is rising & after retrig
+		if( tr // retrig is active!
+	     || self->go == 0 ){ // or the channel is already stopped
+			self->id = MIN_POS_FLOAT; // reset
+			self->go = 1;
+		}
 	}
 	self->sustain_state = state;
 }
@@ -232,7 +235,7 @@ float function_step( func_gen_t* self, float fm_in )
 		}
 		// increment w/ overflow protection
 		while( move != 0.0f ){
-			if( self->id >= 0.0f ){ // are we above zero BEFORE moving
+			if( self->id > 0.0f ){ // are we above zero BEFORE moving
 				self->id += move;
 				move = 0.0f;
 				if( self->id >= 1.0f ){
@@ -271,6 +274,7 @@ float function_step( func_gen_t* self, float fm_in )
 
 float function_un_v( func_gen_t* self, float r_up, float r_down, float fm_in )
 {
+	self->sustaining = 0;
 	self->zc = 0;
 	if( self->go ){
 		float move;
@@ -283,10 +287,15 @@ float function_un_v( func_gen_t* self, float r_up, float r_down, float fm_in )
 		}
 		// increment w/ overflow protection
 		while( move != 0.0f ){
-			if( self->id >= 0.0f ){ // are we above zero BEFORE moving
+			if( self->id > 0.0f ){ // are we above zero BEFORE moving
 				self->id += move;
 				move = 0.0f;
 				if( self->id >= 1.0f ){
+					if( self->s_mode && self->sustain_state ){
+						self->sustaining = 1;
+						self->id = 1.0f;
+						return self->id;
+					}
 					move = (self->id - 1.0f) * r_down / r_up;
 					self->id = -1.0f;
 				} else if( self->id < 0.0f ){
@@ -325,6 +334,7 @@ float function_un_v( func_gen_t* self, float r_up, float r_down, float fm_in )
 
 float function_un_v_ramped( func_gen_t* self, float ramp_composite, float fm_in )
 {
+	self->sustaining = 0;
 	self->zc = 0;
 	if( self->go ){
 		float move;
@@ -343,10 +353,15 @@ float function_un_v_ramped( func_gen_t* self, float ramp_composite, float fm_in 
 		}
 		// increment w/ overflow protection
 		while( move != 0.0f ){
-			if( self->id >= 0.0f ){ // are we above zero BEFORE moving
+			if( self->id > 0.0f ){ // must be ABOVE zero BEFORE moving
 				self->id += move;
 				move = 0.0f;
 				if( self->id >= 1.0f ){ // rise -> fall
+					if( self->s_mode && self->sustain_state ){
+						self->sustaining = 1;
+						self->id = 1.0f;
+						return self->id;
+					}
 					move = (self->id - 1.0f) * (coeff / (1.0 - coeff));
 					self->id = -1.0f;
 				} else if( self->id < 0.0f ){ // TZ from rise
@@ -355,7 +370,7 @@ float function_un_v_ramped( func_gen_t* self, float ramp_composite, float fm_in 
 						move = self->id * (coeff / (1.0 - coeff));
 						if( self->loop > 0 ) { self->loop += 1; }
 					}
-					self->id = 0.0f;
+					self->id = 0.0f; // THIS MUST GO TO FALLING! Hence > 0.0f comparison above
 				}
 			} else { // falling stage
 				self->id += move;
