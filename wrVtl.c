@@ -98,6 +98,205 @@ float* vtl_step_v( vtl_t* self
                  , float* out
                  , int    b_size
                  ){
+    // self->mode is static per block, so we should factor it out of the inner loop
+    	// vtl_mode_sustain especially as it has extra case handling
+		// but do this last because it requires duplication, so we should refine the rest first!
+	// slew_fix = self->rtime only occurs twice. we can default to ftime to reduce inner actions
+
+
+	switch(self->mode){
+	    case vtl_mode_sustain:
+	        for(int i=0; i<b_size; i++){
+	            float slew_fix = self->ftime; // assume regular falling mode
+
+	            // difference between current & dest
+	            float sub_diff = self->dest - self->level;
+
+	            // configuration
+	            if( sub_diff > 0.0 ){ // rising
+	                if( sub_diff < nFloor ) { // call it even
+	                    // sustain mode, so hold val
+	                    // escape w/ fixed output value
+	                    for(; i<b_size; i++){
+	                        out[i] = self->dest;
+	                    }
+	                    self->level = self->dest; // save last val
+	                    return out; // EARLY EXIT
+	                } // normal rise
+	                slew_fix = self->rtime;
+	            } else { // falling
+	                if( sub_diff > -nFloor ){ // call it even
+	                    // hit dest
+	                    // in sustain mode, so hold at dest
+	                    for(; i<b_size; i++){
+	                        out[i] = self->dest;
+	                    }
+	                    self->level = self->dest;
+	                    return out; // EARLY EXIT
+	                }// else { // normal falling
+	                    // slew_fix = self->ftime;
+	                //}
+	            }
+
+	            // signal processing
+	            // some kind of hysteresis: out += 2 * in * previous^2
+	            float slew_mod = slew_fix + slew_fix * self->level * self->level * 2.0;
+	            slew_mod = (slew_mod > 0.2) ? 0.2 : slew_mod; // limit rate to 1/5 per samp
+	            out[i] = self->level + (slew_mod * sub_diff);
+	            self->level = out[i];
+	        }
+	        break;
+
+	    case vtl_mode_cycle:
+	        for(int i=0; i<b_size; i++){
+	            float slew_fix = self->ftime; // assume regular falling mode
+
+	            // difference between current & dest
+	            float sub_diff = self->dest - self->level;
+
+	            // configuration
+	            if( sub_diff > 0.0 ){ // rising
+	                if( sub_diff < nFloor ) { // call it even
+	                    self->dest = 0.0; // go toward zero
+	                    // slew_fix = self->ftime;
+	                } else { // normal rise
+	                    slew_fix = self->rtime;
+	                }
+	            } else { // falling
+	                if( sub_diff > -nFloor ){ // call it even
+	                    if (self->dest == self->vel){ // AT MAX!
+	                        self->dest = 0.0; // go to fall
+	                        // slew_fix = self->ftime;
+	                    } else { // go to rise
+	                        self->dest = self->vel;
+	                        slew_fix = self->rtime;
+	                    }
+	                }// else { // normal falling
+	                    // slew_fix = self->ftime;
+	                //}
+	            }
+
+	            // signal processing
+	            // some kind of hysteresis: out += 2 * in * previous^2
+	            float slew_mod = slew_fix + slew_fix * self->level * self->level * 2.0;
+	            slew_mod = (slew_mod > 0.2) ? 0.2 : slew_mod; // limit rate to 1/5 per samp
+	            out[i] = self->level + (slew_mod * sub_diff);
+	            self->level = out[i];
+	        }
+	        break;
+
+	    case vtl_mode_transient:
+	        for(int i=0; i<b_size; i++){
+	            float slew_fix = self->ftime; // assume regular falling mode
+
+	            // difference between current & dest
+	            float sub_diff = self->dest - self->level;
+
+	            // configuration
+	            if( sub_diff > 0.0 ){ // rising
+	                if( sub_diff < nFloor ) { // call it even
+	                    self->dest = 0.0; // go toward zero
+	                    // slew_fix = self->ftime;
+	                } else { // normal rise
+	                    slew_fix = self->rtime;
+	                }
+	            } else { // falling
+	                if( sub_diff > -nFloor ){ // call it even
+	                    // hit dest
+	                    if( self->dest == 0.0 ){ // dest was 'off', so fill with zeroes
+	                        for(; i<b_size; i++){
+	                            out[i] = self->dest;
+	                        }
+	                        self->level = self->dest;
+	                        return out; // EARLY EXIT
+	                    } else { // hit a peak from above, so need to decay to zero
+	                        self->dest = 0.0; // go toward zero
+	                        // slew_fix = self->ftime;
+	                    }
+	                }// else { // normal falling
+	                    // slew_fix = self->ftime;
+	                //}
+	            }
+
+	            // signal processing
+	            // some kind of hysteresis: out += 2 * in * previous^2
+	            float slew_mod = slew_fix + slew_fix * self->level * self->level * 2.0;
+	            slew_mod = (slew_mod > 0.2) ? 0.2 : slew_mod; // limit rate to 1/5 per samp
+	            out[i] = self->level + (slew_mod * sub_diff);
+	            self->level = out[i];
+	        }
+	        break;
+	}
+
+
+/*    for(int i=0; i<b_size; i++){
+        float slew_fix = self->ftime; // assume regular falling mode
+
+	    // difference between current & dest
+        float sub_diff = self->dest - self->level;
+
+        // configuration
+        if( sub_diff > 0.0 ){ // rising
+            if( sub_diff < nFloor ) { // call it even
+                if( self->mode != vtl_mode_sustain ){
+                    self->dest = 0.0; // go toward zero
+                    // slew_fix = self->ftime;
+                } else { // sustain mode, so hold val
+                    // escape w/ fixed output value
+                    for(; i<b_size; i++){
+                        out[i] = self->dest;
+                    }
+                    self->level = self->dest; // save last val
+                    return out; // EARLY EXIT
+                }
+            } else { // normal rise
+                slew_fix = self->rtime;
+            }
+        } else { // falling
+            if( sub_diff > -nFloor ){ // call it even
+                if( self->mode == vtl_mode_cycle ){
+                    if (self->dest == self->vel){ // AT MAX!
+                        self->dest = 0.0; // go to fall
+                        // slew_fix = self->ftime;
+                    } else { // go to rise
+                        self->dest = self->vel;
+                        slew_fix = self->rtime;
+                    }
+                } else { // hit dest
+                    if( self->dest == 0.0                 // dest was 'off', so fill with zeroes
+                     || self->mode == vtl_mode_sustain ){ // or in sustain mode, so hold at dest
+                        for(; i<b_size; i++){
+                            out[i] = self->dest;
+                        }
+                        self->level = self->dest;
+                        return out; // EARLY EXIT
+                    } else { // hit a peak from above, so need to decay to zero
+                        self->dest = 0.0; // go toward zero
+                        // slew_fix = self->ftime;
+                    }
+                }
+            }// else { // normal falling
+                // slew_fix = self->ftime;
+            //}
+        }
+
+        // signal processing
+        // some kind of hysteresis: out += 2 * in * previous^2
+        float slew_mod = slew_fix + slew_fix * self->level * self->level * 2.0;
+        slew_mod = (slew_mod > 0.2) ? 0.2 : slew_mod; // limit rate to 1/5 per samp
+        out[i] = self->level + (slew_mod * sub_diff);
+        self->level = out[i];
+    }
+    */
+
+    return out;
+}
+
+/*
+float* vtl_step_v( vtl_t* self
+                 , float* out
+                 , int    b_size
+                 ){
 	float slew_mod, slew_fix;
 	float* out2=out;
 	float* out3=out;
@@ -133,12 +332,18 @@ float* vtl_step_v( vtl_t* self
 					self->dest = self->vel;
 					slew_fix = self->rtime;
 				}
-			} else { // hit bottom
-				for( i=0; i<b_size; i++ ){
-					*out2++ = self->dest;
+			} else { // hit dest
+				if( self->dest == 0.0 				  // dest was 'off', so fill with zeroes
+				 || self->mode == vtl_mode_sustain ){ // or in sustain mode, so hold at dest
+					for( i=0; i<b_size; i++ ){
+						*out2++ = self->dest;
+					}
+					self->level = self->dest;
+					return out; // EARLY EXIT
+				} else { // hit a peak from above, so need to decay to zero
+					self->dest = 0.0; // go toward zero
+					slew_fix = self->ftime;
 				}
-				self->level = self->dest;
-				return out; // EARLY EXIT
 			}
 		} else { // normal falling
 			slew_fix = self->ftime;
@@ -160,7 +365,7 @@ float* vtl_step_v( vtl_t* self
 					self->dest = 0.0; // go toward zero
 					slew_fix = self->ftime;
 				} else { // sustain mode, so hold val
-					for( i; i<b_size; i++ ){
+					for(; i<b_size; i++ ){
 						*out2++ = self->dest;
 					}
 					self->level = self->dest; // save last val
@@ -179,12 +384,18 @@ float* vtl_step_v( vtl_t* self
 						self->dest = self->vel;
 						slew_fix = self->rtime;
 					}
-				} else { // hit bottom
-					for( i; i<b_size; i++ ){
-						*out2++ = self->dest;
+				} else { // hit dest
+					if( self->dest == 0.0 				  // dest was 'off', so fill with zeroes
+					 || self->mode == vtl_mode_sustain ){ // or in sustain mode, so hold at dest
+						for(; i<b_size; i++ ){
+							*out2++ = self->dest;
+						}
+						self->level = self->dest;
+						return out; // EARLY EXIT
+					} else { // hit a peak from above, so need to decay to zero
+						self->dest = 0.0; // go toward zero
+						slew_fix = self->ftime;
 					}
-					self->level = self->dest;
-					return out; // EARLY EXIT
 				}
 			} else { // normal falling
 				slew_fix = self->ftime;
@@ -199,4 +410,130 @@ float* vtl_step_v( vtl_t* self
 	self->level = *out3;
 
 	return out;
+}
+
+*/
+
+switch(self->mode){
+    case vtl_mode_sustain:
+        for(int i=0; i<b_size; i++){
+            float slew_fix = self->ftime; // assume regular falling mode
+
+            // difference between current & dest
+            float sub_diff = self->dest - self->level;
+
+            // configuration
+            if( sub_diff > 0.0 ){ // rising
+                if( sub_diff < nFloor ) { // call it even
+                    // sustain mode, so hold val
+                    // escape w/ fixed output value
+                    for(; i<b_size; i++){
+                        out[i] = self->dest;
+                    }
+                    self->level = self->dest; // save last val
+                    return out; // EARLY EXIT
+                } // normal rise
+                slew_fix = self->rtime;
+            } else { // falling
+                if( sub_diff > -nFloor ){ // call it even
+                    // hit dest
+                    // in sustain mode, so hold at dest
+                    for(; i<b_size; i++){
+                        out[i] = self->dest;
+                    }
+                    self->level = self->dest;
+                    return out; // EARLY EXIT
+                }// else { // normal falling
+                    // slew_fix = self->ftime;
+                //}
+            }
+
+            // signal processing
+            // some kind of hysteresis: out += 2 * in * previous^2
+            float slew_mod = slew_fix + slew_fix * self->level * self->level * 2.0;
+            slew_mod = (slew_mod > 0.2) ? 0.2 : slew_mod; // limit rate to 1/5 per samp
+            out[i] = self->level + (slew_mod * sub_diff);
+            self->level = out[i];
+        }
+        break;
+
+    case vtl_mode_cycle:
+        for(int i=0; i<b_size; i++){
+            float slew_fix = self->ftime; // assume regular falling mode
+
+            // difference between current & dest
+            float sub_diff = self->dest - self->level;
+
+            // configuration
+            if( sub_diff > 0.0 ){ // rising
+                if( sub_diff < nFloor ) { // call it even
+                    self->dest = 0.0; // go toward zero
+                    // slew_fix = self->ftime;
+                } else { // normal rise
+                    slew_fix = self->rtime;
+                }
+            } else { // falling
+                if( sub_diff > -nFloor ){ // call it even
+                    if (self->dest == self->vel){ // AT MAX!
+                        self->dest = 0.0; // go to fall
+                        // slew_fix = self->ftime;
+                    } else { // go to rise
+                        self->dest = self->vel;
+                        slew_fix = self->rtime;
+                    }
+                }// else { // normal falling
+                    // slew_fix = self->ftime;
+                //}
+            }
+
+            // signal processing
+            // some kind of hysteresis: out += 2 * in * previous^2
+            float slew_mod = slew_fix + slew_fix * self->level * self->level * 2.0;
+            slew_mod = (slew_mod > 0.2) ? 0.2 : slew_mod; // limit rate to 1/5 per samp
+            out[i] = self->level + (slew_mod * sub_diff);
+            self->level = out[i];
+        }
+        break;
+
+    case vtl_mode_transient:
+        for(int i=0; i<b_size; i++){
+            float slew_fix = self->ftime; // assume regular falling mode
+
+            // difference between current & dest
+            float sub_diff = self->dest - self->level;
+
+            // configuration
+            if( sub_diff > 0.0 ){ // rising
+                if( sub_diff < nFloor ) { // call it even
+                    self->dest = 0.0; // go toward zero
+                    // slew_fix = self->ftime;
+                } else { // normal rise
+                    slew_fix = self->rtime;
+                }
+            } else { // falling
+                if( sub_diff > -nFloor ){ // call it even
+                    // hit dest
+                    if( self->dest == 0.0 ){ // dest was 'off', so fill with zeroes
+                        for(; i<b_size; i++){
+                            out[i] = self->dest;
+                        }
+                        self->level = self->dest;
+                        return out; // EARLY EXIT
+                    } else { // hit a peak from above, so need to decay to zero
+                        self->dest = 0.0; // go toward zero
+                        // slew_fix = self->ftime;
+                    }
+                }// else { // normal falling
+                    // slew_fix = self->ftime;
+                //}
+            }
+
+            // signal processing
+            // some kind of hysteresis: out += 2 * in * previous^2
+            float slew_mod = slew_fix + slew_fix * self->level * self->level * 2.0;
+            slew_mod = (slew_mod > 0.2) ? 0.2 : slew_mod; // limit rate to 1/5 per samp
+            out[i] = self->level + (slew_mod * sub_diff);
+            self->level = out[i];
+        }
+        break;
 }
