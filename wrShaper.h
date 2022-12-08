@@ -15,6 +15,7 @@ typedef struct shaper{
 	uint16_t chans;		// channel count for parallelization
 	uint8_t* zone;		// vector of interp regions
 	float* coeff;		// vector of interp coefficients
+	float last_control; // memory for linear-fade of control-rate
 } shaper_t;
 
 int8_t shaper_init( shaper_t* self, uint16_t b_size, uint16_t channels );

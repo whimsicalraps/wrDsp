@@ -22,6 +22,7 @@ int8_t shaper_init( shaper_t* self, uint16_t b_size, uint16_t channels ){
 	self->coeff = malloc(sizeof(float)*b_size);
 	if( self->coeff == NULL ){ err = 2; }
 	for(uint16_t i=0; i<b_size; i++){ self->coeff[i] = 0.0f; }
+    self->last_control = 0.0f;
 
 	return err;
 }
@@ -38,8 +39,21 @@ void shaper_prep( shaper_t* self, float control )
 // NOTE: We create a shared array of zones & coeffs for all channels
 void shaper_prep_v( shaper_t* self, float* audio, float control )
 {
+    // audio-rate interpolation of control-rate input
+    // was causing audible glitches in the wavefolder due to DC feedthrough
+    float smooth_control[self->b_size];
+    float difference = control - self->last_control;
+    float diff_step = difference / self->b_size;
+    float next_step = self->last_control;
+    for(uint16_t i=0; i<(self->b_size); i++){
+        next_step += diff_step; // first step already moves!
+        smooth_control[i] = next_step;
+    }
+    self->last_control = smooth_control[self->b_size-1];
+
+    // calculate zone (which shaper funcs) and coeff (the xfade between states)
 	for(uint16_t i=0; i<(self->b_size); i++){
-        float tmp = lim_f((control + audio[i]) * 4.0f, 0.0f, 3.999999f);
+        float tmp = lim_f((smooth_control[i] + audio[i]) * 4.0f, 0.0f, 3.999999f);
         self->zone[i] = (uint8_t)tmp;
         self->coeff[i] = tmp - (float)self->zone[i];
 	}
