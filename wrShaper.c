@@ -239,12 +239,19 @@ static float fold( float in, float coeff )
 {
     // bipolar fold with offset symmetry to fold 2:1 top/bottom
     in = _sin(in); // sin then back convert +/-1 to (0..1)
-    float gain = 2.5 * coeff;
+
+    // use exponential scaling as it smooths initial transition
+    // plus reduces noise injection from the coeff input according to wavefold depth
+    // float gain = 2.5 * coeff; // linear application
+    float gain = 1.2 * coeff * coeff; // exponential (^2) application
+
+    // apply the scaled coeff as a gain constant & a DC offset
     in *= gain + 1.0; // 1-6x gain
     in += gain * 0.5; // TODO fine tune this value to acheive ideal sound
 
-    // direct switch version for clarity
+    // perform the wavefold
 
+    // direct switch version for clarity:
     // here we perform math.floor of in to find the region
     // shift float up so it's always positive, truncate, then un-shift
     // this ensures cast-to-int truncates correctly below zero (down to -8)
@@ -262,11 +269,9 @@ static float fold( float in, float coeff )
     //     default:          return 0.f; // shouldn't happen
     // }
 
-    // branchless-ish version based on above. ~8% faster on stm32f4.
-
+    // branchless-ish version based on above: ~8% faster on stm32f4.
     int win2 = ((int)(in + 7.f)) >> 1;
     float offset = (float)((win2 << 1) - 6); // multiply by 2 then subtract 6
-
     // if LSB is 1 we choose to invert
     return (win2 & 1) ? (in - offset) : (offset - in) ;
 }
