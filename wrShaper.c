@@ -193,9 +193,19 @@ inline static float _xfade( float a, float b, float c ){
     return (a + c*(b-a));
 }
 
+// 'in' here is the shaper coefficient, NOT the input signal
+// we use the retval to scale up the input & then clip it outside of here
+////// v4.6
+// a) switched from quadratic to power16 for steeper curve
+// b) set target multiplier to 40x (very sharp envs & rich squares)
+// magic number (1.259299) == power(40,1/8)
+// power of 16 is just 4 compounded squares (i think this is the fastest way)
 inline static float _squ( float in ){
-    float sq = 2.5 - (in * 1.5);
-    return (sq*sq);
+    float sq = 1.259299 - (in * 0.259299); // range is 40^(1/8) to 1.0
+    sq = sq*sq; // ^2
+    sq = sq*sq; // ^4
+    sq = sq*sq; // ^8
+    return sq*sq; // ^16
 }
 
 static float _log( float in ){
