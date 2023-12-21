@@ -201,7 +201,9 @@ inline static float _xfade( float a, float b, float c ){
 // magic number (1.259299) == power(40,1/8)
 // power of 16 is just 4 compounded squares (i think this is the fastest way)
 inline static float _squ( float in ){
-    float sq = 1.259299 - (in * 0.259299); // range is 40^(1/8) to 1.0
+    in = 1.0 - in; // invert direction
+    in *= in; // square input (spend more time at subtle ratios)
+    float sq = 1.0 + 0.259299 * in; // range is 40^(1/8) to 1.0
     sq = sq*sq; // ^2
     sq = sq*sq; // ^4
     sq = sq*sq; // ^8
